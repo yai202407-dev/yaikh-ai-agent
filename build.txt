@@ -1,0 +1,19 @@
+﻿
+> ai-agent-typescript@2.0.0 build
+> tsc
+
+src/core/Agent.ts(12,14): error TS2420: Class 'Agent' incorrectly implements interface 'IAgent'.
+  Property 'stream' is missing in type 'Agent' but required in type 'IAgent'.
+src/core/Agent.ts(141,61): error TS6133: 'toolNames' is declared but its value is never read.
+src/core/Planner.ts(1,35): error TS6133: 'PlanStep' is declared but its value is never read.
+src/infrastructure/llm/OpenAIClient.ts(8,13): error TS6133: 'apiKey' is declared but its value is never read.
+src/infrastructure/llm/OpenAIClient.ts(9,13): error TS6133: 'model' is declared but its value is never read.
+src/infrastructure/llm/OpenAIClient.ts(16,11): error TS2416: Property 'generate' in type 'OpenAIClient' is not assignable to the same property in base type 'ILLMClient'.
+  Type '(prompt: string) => Promise<string>' is not assignable to type '(prompt: string) => Promise<GenerateResponse>'.
+    Type 'Promise<string>' is not assignable to type 'Promise<GenerateResponse>'.
+      Type 'string' is not assignable to type 'GenerateResponse'.
+src/infrastructure/llm/OpenAIClient.ts(16,20): error TS6133: 'prompt' is declared but its value is never read.
+src/infrastructure/llm/OpenAIClient.ts(28,16): error TS6133: 'messages' is declared but its value is never read.
+src/infrastructure/llm/OpenAIClient.ts(28,41): error TS6133: 'tools' is declared but its value is never read.
+src/skills/chat/ChatSkill.ts(10,19): error TS6133: 'params' is declared but its value is never read.
+src/skills/data/PurchaseRequestMongoTools.ts(233,19): error TS6133: 'db' is declared but its value is never read.

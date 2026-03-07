@@ -242,6 +242,14 @@ export class Agent implements IAgent {
     /**
      * Clear conversation history
      */
+    async stream(userId: string, message: string, onChunk: (chunk: string) => void): Promise<AgentResponse> {
+        onChunk("Streaming not completely implemented yet...");
+        return this.process(userId, message);
+    }
+
+    /**
+     * Clear conversation history
+     */
     async clearHistory(userId: string): Promise<void> {
         await this.memory.clearConversationHistory(userId);
         console.log(`🗑️ [Agent] Cleared conversation history for user ${userId}`);

@@ -1,4 +1,4 @@
-import { ILLMClient, ChatMessage, ChatResponse, Tool } from '../../core/interfaces/ILLMClient.js';
+import { ILLMClient, ChatMessage, ChatResponse, GenerateResponse, Tool } from '../../core/interfaces/ILLMClient.js';
 
 /**
  * OpenAI client implementation (stub for future use)
@@ -13,7 +13,7 @@ export class OpenAIClient implements ILLMClient {
         this.model = model;
     }
 
-    async generate(prompt: string): Promise<string> {
+    async generate(prompt: string): Promise<GenerateResponse> {
         // TODO: Implement OpenAI API call
         // const openai = new OpenAI({ apiKey: this.apiKey });
         // const response = await openai.completions.create({
