@@ -1,0 +1,56 @@
+{
+  "name": "ai-agent-typescript",
+  "version": "2.0.0",
+  "description": "Production-ready AI Agent with TypeScript, modular architecture, and clean design",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "clean": "rimraf dist",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "llm",
+    "ollama",
+    "typescript",
+    "chatgpt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@langchain/community": "^1.1.12",
+    "@langchain/core": "^1.1.18",
+    "@langchain/google-genai": "^2.1.15",
+    "@langchain/ollama": "^1.2.2",
+    "@types/pdfkit": "^0.17.5",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "duck-duck-scrape": "^2.2.7",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "langchain": "^1.2.16",
+    "langsmith": "^0.4.12",
+    "mongodb": "^7.0.0",
+    "ollama": "^0.6.3",
+    "pdfkit": "^0.17.2",
+    "wikipedia": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
