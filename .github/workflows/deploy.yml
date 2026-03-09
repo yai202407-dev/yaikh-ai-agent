@@ -84,6 +84,7 @@ jobs:
           secrets: |
             GEMINI_API_KEY=yaikh-gemini-api-key:latest
             LANGCHAIN_API_KEY=yaikh-langsmith-key:latest
+            DB_DSN=yaikh-db-dsn:latest
             DB_HOST=yaikh-db-host:latest
             DB_PORT=yaikh-db-port:latest
             DB_USERNAME=yaikh-db-username:latest

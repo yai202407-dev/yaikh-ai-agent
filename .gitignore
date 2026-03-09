@@ -24,3 +24,6 @@ Thumbs.db
 
 # Test
 coverage/
+
+# Data Sync Engine
+src/infrastructure/data-sync
