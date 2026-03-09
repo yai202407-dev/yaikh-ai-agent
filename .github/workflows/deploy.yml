@@ -80,6 +80,7 @@ jobs:
             GEMINI_MODEL=gemini-2.5-flash
             MODULE_SCOPE=AI_ADMIN\,AI_PRODUCTION\,AI_HR\,AI_QMS
             LANGCHAIN_PROJECT=Yorkmars Agent
+            REPORT_BASE_URL=https://yaikh-ai-agent-dtbkajcrna-as.a.run.app
           secrets: |
             GEMINI_API_KEY=yaikh-gemini-api-key:latest
             LANGCHAIN_API_KEY=yaikh-langsmith-key:latest
