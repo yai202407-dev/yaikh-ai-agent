@@ -78,7 +78,7 @@ jobs:
             NODE_ENV=production
             LLM_PROVIDER=gemini
             GEMINI_MODEL=gemini-2.5-flash
-            MODULE_SCOPE=AI_ADMIN,AI_PRODUCTION,AI_HR,AI_QMS
+            MODULE_SCOPE=AI_ADMIN\,AI_PRODUCTION\,AI_HR\,AI_QMS
             LANGCHAIN_PROJECT=Yorkmars Agent
           secrets: |
             GEMINI_API_KEY=yaikh-gemini-api-key:latest
