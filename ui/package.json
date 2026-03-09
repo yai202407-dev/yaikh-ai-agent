@@ -1,0 +1,31 @@
+{
+    "name": "yai-bot-client",
+    "private": true,
+    "version": "1.0.2",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@tailwindcss/typography": "^0.5.19",
+        "@tailwindcss/vite": "^4.2.1",
+        "langchain": "^0.1.31",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-markdown": "^10.1.0",
+        "react-syntax-highlighter": "^16.1.1",
+        "remark-gfm": "^4.0.1",
+        "tailwindcss": "^4.2.1"
+    },
+    "devDependencies": {
+        "@types/react": "^18.2.66",
+        "@types/react-dom": "^18.2.22",
+        "@types/react-syntax-highlighter": "^15.5.13",
+        "@vitejs/plugin-react": "^4.2.1",
+        "typescript": "^5.2.2",
+        "vite": "^5.2.0"
+    }
+}

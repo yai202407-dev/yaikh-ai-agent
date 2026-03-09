@@ -5,7 +5,9 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build:api": "tsc",
+    "build:ui": "cd ui && npm install && npm run build",
+    "build": "npm run build:api && npm run build:ui",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "clean": "rimraf dist",
