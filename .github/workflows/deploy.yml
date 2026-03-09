@@ -98,8 +98,6 @@ jobs:
             --memory=1Gi
             --cpu=1
             --timeout=300
-            --vpc-connector=yaikh-connector
-            --vpc-egress=all-traffic
 
       - name: Output service URL
         run: echo "✅ Deployed to ${{ steps.deploy.outputs.url }}"
