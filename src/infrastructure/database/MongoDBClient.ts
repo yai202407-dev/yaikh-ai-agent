@@ -356,8 +356,17 @@ export function getMongoClient(): MongoDBClient {
             const host = process.env.DB_HOST;
             const port = process.env.DB_PORT || '27017';
 
-            // Added authSource=admin as many MongoDB setups require it for users created in the admin database
-            connectionString = `mongodb://${username}:${password}@${host}:${port}/${databaseName}?authSource=admin&retryWrites=true&w=majority`;
+            // Support mongodb+srv for Atlas clusters automatically
+            const scheme = host.includes('mongodb.net') ? 'mongodb+srv' : 'mongodb';
+            const portStr = scheme === 'mongodb+srv' ? '' : `:${port}`;
+
+            // Build the connection string accordingly
+            connectionString = `${scheme}://${username}:${password}@${host}${portStr}/${databaseName}?retryWrites=true&w=majority`;
+
+            // authSource=admin is usually required for standard mongod deployments, but breaks Atlas sometimes
+            if (scheme !== 'mongodb+srv') {
+                connectionString += '&authSource=admin';
+            }
         }
 
         mongoClient = new MongoDBClient(connectionString, databaseName);

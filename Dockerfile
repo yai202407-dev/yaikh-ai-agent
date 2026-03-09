@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 1 — Build (TypeScript → JavaScript)
 # ─────────────────────────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -15,6 +15,7 @@ RUN npm ci --legacy-peer-deps
 # Copy source
 COPY src/ ./src/
 COPY public/ ./public/
+COPY ui/ ./ui/
 
 # Compile TypeScript
 RUN npm run build
@@ -22,7 +23,7 @@ RUN npm run build
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 2 — Production image (lean)
 # ─────────────────────────────────────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
