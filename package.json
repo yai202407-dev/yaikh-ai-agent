@@ -34,6 +34,8 @@
     "duck-duck-scrape": "^2.2.7",
     "exceljs": "^4.4.0",
     "express": "^4.18.2",
+    "google-auth-library": "^10.6.1",
+    "googleapis": "^171.4.0",
     "langchain": "^1.2.16",
     "langsmith": "^0.4.12",
     "mongodb": "^7.0.0",

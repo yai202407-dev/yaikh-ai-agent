@@ -15,6 +15,7 @@ import { CAR_BOOKING_MONGO_TOOLS } from './skills/data/CarBookingMongoTools.js';
 import { WEB_SEARCH_TOOLS } from './skills/web/DuckDuckGoTool.js';
 import { WIKI_SEARCH_TOOLS } from './skills/web/WikipediaTool.js';
 import { REPORT_TOOLS } from './skills/report/ReportTools.js';
+import { GOOGLE_DRIVE_TOOLS } from './skills/data/GoogleDriveTools.js';
 
 /**
  * Bootstrap and start the AI Agent application
@@ -86,6 +87,11 @@ async function bootstrap() {
 
     // Register Web Search tools
     WEB_SEARCH_TOOLS.forEach(tool => {
+        toolRegistry.register(tool, 'general');
+    });
+
+    // Register Google Drive tools
+    GOOGLE_DRIVE_TOOLS.forEach(tool => {
         toolRegistry.register(tool, 'general');
     });
 
