@@ -350,10 +350,9 @@ export function getMongoClient(): MongoDBClient {
         const databaseName = process.env.DB_DATABASE || 'ym_eco_board';
 
         // Override using the known working Atlas credentials for both Dev and Prod to guarantee connection
-        // We use the explicit fallback string here to bypass mongodb+srv SRV polling issues on node:20-slim Cloud Run 
         if (process.env.NODE_ENV === 'production' || !connectionString) {
             console.log("⚠️ Overriding connection string to use known Working Atlas Cluster.");
-            connectionString = 'mongodb://yai202407_db_user:w4T0FwTGNzpAjUz7@ac-ajyouyi-shard-00-00.d4ozsqu.mongodb.net:27017,ac-ajyouyi-shard-00-01.d4ozsqu.mongodb.net:27017,ac-ajyouyi-shard-00-02.d4ozsqu.mongodb.net:27017/ym_eco_board?ssl=true&replicaSet=atlas-s3j6gn-shard-0&authSource=admin&retryWrites=true&w=majority';
+            connectionString = 'mongodb+srv://yai202407_db_user:w4T0FwTGNzpAjUz7@cluster0.d4ozsqu.mongodb.net/ym_eco_board?retryWrites=true&w=majority';
         }
 
         const safeLogUrl = connectionString.replace(/:([^:@]+)@/, ':****@');
