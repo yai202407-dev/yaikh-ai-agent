@@ -17,6 +17,7 @@ import { WIKI_SEARCH_TOOLS } from './skills/web/WikipediaTool.js';
 import { REPORT_TOOLS } from './skills/report/ReportTools.js';
 import { GOOGLE_DRIVE_TOOLS } from './skills/data/GoogleDriveTools.js';
 import { DYNAMIC_MONGO_TOOLS } from './skills/data/DynamicMongoTools.js';
+import { VERTEX_AI_TOOLS } from './skills/report/VertexAITools.js';
 
 /**
  * Bootstrap and start the AI Agent application
@@ -109,6 +110,11 @@ async function bootstrap() {
     // Register Dynamic Mongo Tools
     DYNAMIC_MONGO_TOOLS.forEach(tool => {
         toolRegistry.register(tool, 'general');
+    });
+
+    // Register Vertex AI & Notebook LM Tools
+    VERTEX_AI_TOOLS.forEach(tool => {
+        toolRegistry.register(tool, 'report');
     });
 
     console.log(`   ✓ Registered ${toolRegistry.getAllTools().length} tools`);

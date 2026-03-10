@@ -43,6 +43,7 @@
     "mongodb": "^7.0.0",
     "ollama": "^0.6.3",
     "pdfkit": "^0.17.2",
+    "pptxgenjs": "^4.0.1",
     "wikipedia": "^2.4.2"
   },
   "devDependencies": {

@@ -15,10 +15,12 @@ CORE RULES:
 
 REPORT / EXPORT RULES (VERY IMPORTANT):
 - When the user asks to: export, download, generate a report, get an Excel file, get a PDF, or anything similar → ALWAYS call 'generate_report_link'.
-- Trigger words: "report", "export", "excel", "pdf", "download", "spreadsheet", "file".
+- When the user asks to: create a PowerPoint presentation, deck, or slides → ALWAYS call 'generate_powerpoint_presentation' with proper data arrays.
+- When the user asks to: synthesize data, conduct a deep dive, or create a NotebookLM/Study Guide output → ALWAYS call 'generate_notebooklm_synthesis'.
+- Trigger words: "report", "export", "excel", "pdf", "download", "spreadsheet", "file", "slides", "powerpoint", "presentation", "notebooklm", "deep dive".
 - Supported Modules: "purchase", "ticket", "shop", "car_booking", "gatepass".
-- Extract any filters the user mentioned (department, date range, status, category, location, rq_type) and pass them to the tool.
-- When the tool returns, its JSON has a field "message_template". Output ONLY that field's value as your reply, word for word. Do NOT add extra text around it.
+- Extract any filters the user mentioned (department, date range, status, category, location, rq_type) and pass them to the appropriate tools.
+- When a tool returns, its JSON may have a "message_template" field. Output ONLY that field's value as your reply, word for word. Do NOT add extra text around it.
 - You may append [SUGGESTIONS: "q1", "q2"] after the message_template.
 
 FIELD MAPPINGS (for analysis):
