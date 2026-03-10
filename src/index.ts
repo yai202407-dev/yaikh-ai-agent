@@ -3,7 +3,7 @@ import { LangChainAgent } from './core/LangChainAgent.js';
 import { InMemoryStore } from './infrastructure/memory/InMemoryStore.js';
 import { ToolRegistry } from './core/ToolRegistry.js';
 import { createServer } from './api/server.js';
-import { SYSTEM_PROMPT } from './config/prompts.js';
+import { getDynamicSystemPrompt } from './config/prompts.js';
 
 // Import skills
 import { ChatSkill } from './skills/chat/ChatSkill.js';
@@ -118,7 +118,7 @@ async function bootstrap() {
     const agent = new LangChainAgent(
         memory,
         toolRegistry,
-        SYSTEM_PROMPT,
+        getDynamicSystemPrompt,
         modelName,
         baseUrlOrApiKey,
         LLM_PROVIDER

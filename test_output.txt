@@ -1,0 +1,35 @@
+==========================================
+🤖 INITIATING 5-QUESTION STRESS TEST TO YAI2
+==========================================
+
+
+💬 Asking Yai2: "What are the names of the collections in the database that handle security or cameras?"
+⏱️  Yai2 replied in 4.9s:
+The collection that handles cameras is `cameras`.
+   (🔧 Yai2 successfully used backend database tools for this answer)
+
+💬 Asking Yai2: "Can you look at the 'cameras' collection and tell me what the data fields look like?"
+⏱️  Yai2 replied in 4.8s:
+The `cameras` collection has the following data fields: `_id`, `name`, `ip_address`, `status`, `updated_at`, `created_at`, and `device_id`.
+
+A sample record shows a camera named "Main Gate Out" with IP address "192.168.1.169", status "Active", and device ID "H010001190A0100011610".
+   (🔧 Yai2 successfully used backend database tools for this answer)
+
+💬 Asking Yai2: "Tell me the name or details of one camera that is stored in the 'cameras' database."
+⏱️  Yai2 replied in 2.7s:
+One camera in the database is named "Main Gate In" with an IP address of "192.168.1.168" and a device ID of "H010001190A0100011609". It is currently "Active".
+   (🔧 Yai2 successfully used backend database tools for this answer)
+
+💬 Asking Yai2: "Who is the system administrator for this dashboard?"
+⏱️  Yai2 replied in 1.0s:
+Viroth is the Administrator.
+   (🧠 Yai2 answered from general knowledge/memory)
+
+💬 Asking Yai2: "Do you remember what collections I just asked you about?"
+⏱️  Yai2 replied in 1.3s:
+Yes, you asked about the 'cameras' collection.
+   (🧠 Yai2 answered from general knowledge/memory)
+
+==========================================
+✅ TEST COMPLETE
+==========================================

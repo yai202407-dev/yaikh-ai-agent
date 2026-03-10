@@ -19,7 +19,7 @@ export class LangChainAgent implements IAgent {
     constructor(
         private memory: IMemoryStore,
         private toolRegistry: ToolRegistry,
-        private systemPrompt: string,
+        private systemPrompt: string | (() => Promise<string>),
         private modelName: string = "llama3.1:latest",
         private baseUrlOrApiKey: string = "http://localhost:11434",
         private provider: 'ollama' | 'gemini' = 'ollama'
@@ -92,8 +92,12 @@ export class LangChainAgent implements IAgent {
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
+
+            // Fetch dynamic prompt if it's a function
+            const resolvedPrompt = typeof this.systemPrompt === 'function' ? await this.systemPrompt() : this.systemPrompt;
+
             const messages: any[] = [
-                new SystemMessage(`Current Date & Time: ${currentDateTime}\n\n${this.systemPrompt}`)
+                new SystemMessage(`Current Date & Time: ${currentDateTime}\n\n${resolvedPrompt}`)
             ];
 
             // Add conversation history
@@ -281,7 +285,8 @@ export class LangChainAgent implements IAgent {
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
-            const messages: any[] = [new SystemMessage(`Current Date & Time: ${currentDateTime}\n\n${this.systemPrompt}`)];
+            const resolvedPrompt = typeof this.systemPrompt === 'function' ? await this.systemPrompt() : this.systemPrompt;
+            const messages: any[] = [new SystemMessage(`Current Date & Time: ${currentDateTime}\n\n${resolvedPrompt}`)];
 
             for (const msg of history) {
                 messages.push(msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content));

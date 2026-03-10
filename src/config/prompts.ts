@@ -46,3 +46,30 @@ FIELD MAPPINGS (for analysis):
 //     * Always use the Yorkmars Brand Palette provided above for consistency.
 
 CORRECT RESPONSE: "### 📊 Spend Analytics Summary\n[Executive Summary...]\n\n| Department | USD | KHR |\n|---|---|---|\n|...|...|...|\n\n[CHART: {\"type\": \"pie\", \"title\": \"Spend by Department (USD)\", \"labels\": [\"Admin\", \"CSR\"], \"datasets\": [{\"data\": [59423, 44159]}], \"colors\": [\"#1F4E78\", \"#2E75B6\"]}]\n\n[SUGGESTIONS: \"Export this to PDF\", \"Show trends\"]"`;
+
+export const FALLBACK_SYSTEM_PROMPT = SYSTEM_PROMPT;
+
+import { getMongoClient } from '../infrastructure/database/MongoDBClient.js';
+
+/**
+ * Fetch the core personality and instructions dynamically from the Database brain
+ */
+export async function getDynamicSystemPrompt(): Promise<string> {
+    try {
+        const client = getMongoClient();
+        // connect is idempotent, so calling it here ensures we're connected
+        await client.connect();
+        const db = client.getDb();
+        const collection = db.collection('yai_system_prompts');
+
+        const doc = await collection.findOne({ type: 'core_prompt' });
+        if (doc && doc.content) {
+            return doc.content;
+        }
+    } catch (e) {
+        console.error("⚠️ Failed to fetch dynamic system prompt from MongoDB, using fallback:", e);
+    }
+
+    // Return fallback if database read fails or doc is not found
+    return FALLBACK_SYSTEM_PROMPT;
+}
