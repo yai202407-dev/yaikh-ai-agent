@@ -349,6 +349,11 @@ export function getMongoClient(): MongoDBClient {
         let connectionString = process.env.DB_DSN || '';
         const databaseName = process.env.DB_DATABASE || 'eco_development';
 
+        // FORCE rebuilding if connecting to Atlas, because old DB_DSN secrets might be wrong
+        if (process.env.DB_HOST && process.env.DB_HOST.includes('mongodb.net')) {
+            connectionString = ''; // Clear it to force rebuild below
+        }
+
         // If connection string is not provided, build it from parts
         if (!connectionString && process.env.DB_HOST) {
             const username = encodeURIComponent(process.env.DB_USERNAME || '');
