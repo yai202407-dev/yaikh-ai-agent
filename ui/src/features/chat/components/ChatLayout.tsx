@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChatLogFeedModal } from './ChatLogFeedModal';
+import { NotebookSidebar } from './NotebookSidebar';
 
 interface ChatLayoutProps {
     headerContent?: React.ReactNode;
@@ -15,6 +16,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
 
     const [userName, setUserName] = useState('Yai Data');
     const [showChatFeed, setShowChatFeed] = useState(false);
+    const [showNotebook, setShowNotebook] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -94,6 +96,18 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                             </div>
                             <span className="font-bold text-[17px] tracking-wide text-white/90">{userName}</span>
                             <button
+                                onClick={() => setShowNotebook(!showNotebook)}
+                                className={`ml-4 flex items-center gap-2 px-3 py-1.5 transition-all outline-none rounded-lg border text-sm font-medium shadow-lg focus:outline-none ${
+                                    showNotebook 
+                                        ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:bg-blue-600/30' 
+                                        : 'bg-[#1C2128] border-white/5 hover:bg-[#22272E] hover:border-white/10 text-white/60 hover:text-white/90'
+                                }`}
+                                title="Toggle Notebook Workspace"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                                {showNotebook ? 'Notebook Open' : 'Notebook'}
+                            </button>
+                            <button
                                 onClick={() => setShowChatFeed(true)}
                                 className="ml-4 flex items-center gap-2 px-3 py-1.5 bg-[#1C2128] hover:bg-[#22272E] text-blue-400 text-sm font-medium rounded-lg border border-white/5 transition-all shadow-lg hover:shadow-blue-500/10 focus:outline-none"
                                 title="Chat Manager Log Feed"
@@ -120,6 +134,8 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                     {inputContent}
                 </footer>
             </main>
+
+            <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} />
 
             {showChatFeed && (
                 <ChatLogFeedModal onClose={() => setShowChatFeed(false)} />
