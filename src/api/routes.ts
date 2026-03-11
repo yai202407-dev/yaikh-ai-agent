@@ -1,6 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { IAgent } from '../core/interfaces/IAgent.js';
 import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
+import multer from 'multer';
+import { NotebookService } from '../skills/notebook/NotebookService.js';
+
+// Use memory storage for ephemeral processing before pushing to GCP Bucket
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB file limit
+});
+const notebookService = new NotebookService();
 
 /**
  * Create API routes
@@ -146,6 +155,39 @@ export function createRoutes(agent: IAgent): Router {
         } catch (error: any) {
             console.error('❌ Fetch chat-log error:', error);
             return res.status(500).json({ error: 'Failed to fetch chat logs' });
+        }
+    });
+
+    /**
+     * NotebookLM: Upload source file (Audio, PDF, TXT)
+     */
+    router.post('/api/agent/upload-source', upload.single('file'), async (req: Request, res: Response) => {
+        try {
+            const file = req.file;
+            if (!file) {
+                return res.status(400).json({ error: 'No file uploaded' });
+            }
+
+            console.log(`[Notebook Upload] Received file: ${file.originalname} (${file.mimetype})`);
+            
+            // Process the buffer via our GCS/Speech/Parser Engine
+            const extractedContent = await notebookService.processNotebookSource(
+                file.buffer, 
+                file.originalname, 
+                file.mimetype
+            );
+
+            // Return the extracted text so the ChatUI can instantly append it to the conversation context
+            return res.json({ 
+                success: true,
+                filename: file.originalname,
+                message: "Source ingested successfully into Google Cloud Storage.",
+                content: extractedContent 
+            });
+
+        } catch (error: any) {
+            console.error('❌ Notebook Upload Error:', error);
+            return res.status(500).json({ error: 'Failed to process and upload source document' });
         }
     });
 

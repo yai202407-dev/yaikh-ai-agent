@@ -21,6 +21,46 @@ export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClos
         { name: 'Infograp...', icon: 'M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
     ];
 
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = React.useState(false);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Assume the API is accessible via standard routing setup
+            // This maps to the /api/agent/upload-source endpoint in Express
+            const response = await fetch('/api/agent/upload-source', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
+
+            const data = await response.json();
+            
+            // Pass the extracted content straight into the Chat
+            if (onToolClick && data.content) {
+                // Formatting it as a system-like context injection
+                onToolClick(`[NOTEBOOK SYSTEM EVENT: User has successfully uploaded source file "${file.name}"]\n\nExtracted Source Data:\n${data.content}`);
+            }
+
+        } catch (error) {
+            console.error("File upload error", error);
+            alert("Failed to process notebook source file.");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     return (
         <div className="w-80 border-l border-white/5 bg-[#010409] flex flex-col h-full shadow-2xl relative z-20 flex-shrink-0 transition-transform duration-300">
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0d1117]">
@@ -37,11 +77,31 @@ export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClos
                 
                 {/* Source Upload Panel */}
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-3">Pinned Sources</h3>
-                <div className="border border-dashed border-white/20 rounded-xl p-6 text-center hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer mb-8 relative group">
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    onChange={handleFileChange} 
+                />
+                <div 
+                    onClick={() => !isUploading && fileInputRef.current?.click()}
+                    className={`border border-dashed border-white/20 rounded-xl p-6 text-center hover:border-blue-500/50 hover:bg-blue-500/5 transition-all mb-8 relative group ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
                     <div className="absolute inset-0 bg-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                    <svg className="w-8 h-8 text-white/20 group-hover:text-blue-400/80 transition-colors mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                    <p className="text-sm text-white/70 font-medium">Drop files to add sources</p>
-                    <p className="text-xs text-white/30 mt-1">Files, images, or audio</p>
+                    {isUploading ? (
+                        <>
+                            <svg className="w-8 h-8 text-blue-400 mx-auto mb-3 animate-spin" fill="none" viewBox="0 0 24 24">
+<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p className="text-sm text-blue-400 font-medium">Ingesting to Cloud...</p>
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-8 h-8 text-white/20 group-hover:text-blue-400/80 transition-colors mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                            <p className="text-sm text-white/70 font-medium">Drop files to add sources</p>
+                            <p className="text-xs text-white/30 mt-1">Files, images, or audio</p>
+                        </>
+                    )}
                 </div>
 
                 {/* Notebook LLM Generator Tools */}
