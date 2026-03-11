@@ -54,9 +54,9 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
         <div className="flex h-screen w-full bg-[#010409] text-white relative overflow-hidden font-sans">
             {/* Deep space background layers */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[10%] left-[15%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px]" />
+                <div className="absolute top-[10%] left-[15%] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[120px]" />
                 <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] bg-orange-600/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[-10%] left-[40%] w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[150px]" />
+                <div className="absolute bottom-[-10%] left-[40%] w-[600px] h-[600px] bg-yellow-600/10 rounded-full blur-[150px]" />
 
                 {/* Random floating stars */}
                 <div className="absolute top-[15%] left-[10%] w-[2px] h-[2px] bg-white/60 rounded-full shadow-[0_0_8px_white]" />
@@ -101,17 +101,17 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                                 onClick={() => setShowNotebook(!showNotebook)}
                                 className={`ml-4 flex items-center gap-2 px-3 py-1.5 transition-all outline-none rounded-lg border text-sm font-medium shadow-lg focus:outline-none ${
                                     showNotebook 
-                                        ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)] hover:bg-blue-600/30' 
+                                        ? 'bg-orange-600/20 border-orange-500/50 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.2)] hover:bg-orange-600/30' 
                                         : 'bg-[#1C2128] border-white/5 hover:bg-[#22272E] hover:border-white/10 text-white/60 hover:text-white/90'
                                 }`}
-                                title="Toggle Notebook Workspace"
+                                title="Toggle AI Workspace"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                                {showNotebook ? 'Notebook Open' : 'Notebook'}
+                                {showNotebook ? 'Workspace Open' : 'Workspace'}
                             </button>
                             <button
                                 onClick={() => setShowChatFeed(true)}
-                                className="ml-4 flex items-center gap-2 px-3 py-1.5 bg-[#1C2128] hover:bg-[#22272E] text-blue-400 text-sm font-medium rounded-lg border border-white/5 transition-all shadow-lg hover:shadow-blue-500/10 focus:outline-none"
+                                className="ml-4 flex items-center gap-2 px-3 py-1.5 bg-[#1C2128] hover:bg-[#22272E] text-orange-400 text-sm font-medium rounded-lg border border-white/5 transition-all shadow-lg hover:shadow-orange-500/10 focus:outline-none"
                                 title="Chat Manager Log Feed"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
