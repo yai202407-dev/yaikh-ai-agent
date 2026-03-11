@@ -124,7 +124,7 @@ export class LangChainAgent implements IAgent {
             console.log(`🔧 Tool calls found: ${response.tool_calls?.length || 0}`);
 
             let iterations = 0;
-            const maxIterations = 3;
+            const maxIterations = 8;
             const executedToolCalls = new Set<string>();
 
             // --- LEAK PROTECTION: Check if response has raw JSON tool calls in content but no native tool_calls ---
@@ -298,7 +298,7 @@ export class LangChainAgent implements IAgent {
             messages.push(new HumanMessage(message));
 
             let iterations = 0;
-            const maxIterations = 3;
+            const maxIterations = 8;
             let usedTools = false;
             let totalUsage: TokenUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
             let finalResponse = "";
