@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { IAgent } from '../core/interfaces/IAgent.js';
+import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
 
 /**
  * Create API routes
@@ -116,6 +117,35 @@ export function createRoutes(agent: IAgent): Router {
         } catch (err: any) {
             console.error('❌ Clear history error:', err);
             return res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * Admin: View all chat logs
+     */
+    router.get('/api/agent/chat-log', async (_req: Request, res: Response) => {
+        try {
+            const db = getFirestoreDb();
+            const snapshot = await db.collection('conversations')
+                .orderBy('lastUpdated', 'desc')
+                .limit(50)
+                .get();
+
+            const logs: any[] = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                logs.push({
+                    sessionId: doc.id,
+                    userId: data.userId || 'Unknown',
+                    lastUpdated: data.lastUpdated?.toDate() || new Date(),
+                    messages: data.messages || []
+                });
+            });
+
+            return res.json({ logs });
+        } catch (error: any) {
+            console.error('❌ Fetch chat-log error:', error);
+            return res.status(500).json({ error: 'Failed to fetch chat logs' });
         }
     });
 

@@ -1,6 +1,7 @@
 import { Firestore } from '@google-cloud/firestore';
 import * as path from 'path';
 import * as url from 'url';
+import * as fs from 'fs';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,11 +26,22 @@ export class FirestoreClient {
     private connect() {
         try {
             console.log(`🔥 Connecting to Google Cloud Firestore [${this.projectId}]...`);
-            this.db = new Firestore({
+            
+            const firestoreOptions: any = {
                 projectId: this.projectId,
-                keyFilename: this.keyFilename,
                 ignoreUndefinedProperties: true 
-            });
+            };
+            
+            // In Cloud Run / Production, we don't have this key file 
+            // the GCP environment provides default credentials implicitly.
+            if (fs.existsSync(this.keyFilename)) {
+                firestoreOptions.keyFilename = this.keyFilename;
+                console.log(`[FirestoreClient] Using explicit local service key.`);
+            } else {
+                console.log(`[FirestoreClient] Local key missing. Falling back to Application Default Credentials.`);
+            }
+
+            this.db = new Firestore(firestoreOptions);
             console.log('✅ Connected to Firestore database.');
         } catch (error) {
             console.error('❌ Failed to connect to Firestore:', error);

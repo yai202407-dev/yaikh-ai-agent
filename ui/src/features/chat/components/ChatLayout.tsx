@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ChatLogFeedModal } from './ChatLogFeedModal';
 
 interface ChatLayoutProps {
     headerContent?: React.ReactNode;
@@ -13,6 +14,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
 }) => {
 
     const [userName, setUserName] = useState('Yai Data');
+    const [showChatFeed, setShowChatFeed] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -91,6 +93,14 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                                 <span className="text-[15px] tracking-tight">{userName.substring(0, 3)}</span>
                             </div>
                             <span className="font-bold text-[17px] tracking-wide text-white/90">{userName}</span>
+                            <button
+                                onClick={() => setShowChatFeed(true)}
+                                className="ml-4 flex items-center gap-2 px-3 py-1.5 bg-[#1C2128] hover:bg-[#22272E] text-blue-400 text-sm font-medium rounded-lg border border-white/5 transition-all shadow-lg hover:shadow-blue-500/10 focus:outline-none"
+                                title="Chat Manager Log Feed"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                Live Log Feed
+                            </button>
                         </div>
                     </div>
 
@@ -110,6 +120,10 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                     {inputContent}
                 </footer>
             </main>
+
+            {showChatFeed && (
+                <ChatLogFeedModal onClose={() => setShowChatFeed(false)} />
+            )}
         </div>
     );
 };
