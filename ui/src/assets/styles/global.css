@@ -75,3 +75,29 @@
 .animate-bounce-custom {
     animation: bounce-custom 1.4s infinite ease-in-out;
 }
+
+@keyframes agent-float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes agent-pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 45px 12px rgba(59, 130, 246, 0.8), inset 0 0 15px 4px rgba(255, 255, 255, 0.5);
+    }
+}
+
+.yai-agent-float {
+    animation: agent-float 4s ease-in-out infinite;
+}
+
+.yai-agent-glow {
+    animation: agent-pulse-glow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
