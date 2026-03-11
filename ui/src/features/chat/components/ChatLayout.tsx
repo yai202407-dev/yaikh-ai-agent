@@ -6,12 +6,14 @@ interface ChatLayoutProps {
     headerContent?: React.ReactNode;
     children: React.ReactNode;
     inputContent: React.ReactNode;
+    onSidebarToolClick?: (toolName: string) => void;
 }
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({
     headerContent,
     children,
-    inputContent
+    inputContent,
+    onSidebarToolClick
 }) => {
 
     const [userName, setUserName] = useState('Yai Data');
@@ -135,7 +137,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                 </footer>
             </main>
 
-            <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} />
+            <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} onToolClick={onSidebarToolClick} />
 
             {showChatFeed && (
                 <ChatLogFeedModal onClose={() => setShowChatFeed(false)} />

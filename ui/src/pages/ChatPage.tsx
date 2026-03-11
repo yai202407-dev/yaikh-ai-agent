@@ -36,6 +36,10 @@ export const ChatPage: React.FC = () => {
                         isLoading={isLoading}
                     />
                 }
+                onSidebarToolClick={async (toolName) => {
+                    const promptText = `Generate a ${toolName} based on the ongoing context in my workspace.`;
+                    await sendMessage(promptText);
+                }}
             >
                 <MessageList messages={messages} isLoading={isLoading} />
             </ChatLayout>

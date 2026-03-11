@@ -3,9 +3,10 @@ import React from 'react';
 interface NotebookSidebarProps {
     isOpen: boolean;
     onClose: () => void;
+    onToolClick?: (toolName: string) => void;
 }
 
-export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClose }) => {
+export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClose, onToolClick }) => {
     if (!isOpen) return null;
 
     const tools = [
@@ -48,7 +49,11 @@ export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClos
                 
                 <div className="flex flex-col gap-2">
                     {tools.map((tool) => (
-                        <button key={tool.name} className="flex items-center gap-3 bg-[#1C2128]/80 hover:bg-[#22272E] border border-white/5 rounded-xl px-4 py-3.5 transition-all hover:border-blue-500/30 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] group overflow-hidden relative text-left">
+                        <button 
+                            key={tool.name} 
+                            onClick={() => onToolClick?.(tool.name)}
+                            className="flex items-center gap-3 bg-[#1C2128]/80 hover:bg-[#22272E] border border-white/5 rounded-xl px-4 py-3.5 transition-all hover:border-blue-500/30 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] group overflow-hidden relative text-left"
+                        >
                             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                             <svg className="w-5 h-5 text-white/50 group-hover:text-blue-400 transition-colors drop-shadow-[0_0_5px_rgba(255,255,255,0.1)] group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tool.icon} /></svg>
                             <span className="text-[13px] font-medium text-white/60 group-hover:text-white/90">{tool.name}</span>
