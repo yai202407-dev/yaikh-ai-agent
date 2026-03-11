@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import { LangChainAgent } from './core/LangChainAgent.js';
-import { InMemoryStore } from './infrastructure/memory/InMemoryStore.js';
+import { FirestoreMemoryStore } from './core/FirestoreMemoryStore.js';
 import { ToolRegistry } from './core/ToolRegistry.js';
 import { createServer } from './api/server.js';
 import { getDynamicSystemPrompt } from './config/prompts.js';
+import * as path from 'path';
+import * as url from 'url';
 
 // Import skills
 import { ChatSkill } from './skills/chat/ChatSkill.js';
@@ -29,6 +31,9 @@ async function bootstrap() {
     const PORT = parseInt(process.env.PORT || '8001');
     const MAX_HISTORY = parseInt(process.env.MAX_HISTORY || '10');
 
+    const __filename = url.fileURLToPath(import.meta.url);
+    const __dirName = path.dirname(__filename);
+
     // Choose Provider
     const LLM_PROVIDER = (process.env.LLM_PROVIDER || 'ollama') as 'ollama' | 'gemini';
     let modelName = process.env.OLLAMA_MODEL || 'llama3.1:latest';
@@ -45,8 +50,8 @@ async function bootstrap() {
 
     // Initialize infrastructure
     console.log('⚙️ Initializing infrastructure...');
-    const memory = new InMemoryStore(MAX_HISTORY);
-    console.log(`   ✓ Memory: InMemoryStore (max ${MAX_HISTORY} messages)`);
+    const memory = new FirestoreMemoryStore();
+    console.log(`   ✓ Memory: Google Cloud Firestore (projectId: ai-agent-489507)`);
 
     // LangSmith Tracking Check
     if (process.env.LANGCHAIN_TRACING_V2 === 'true') {

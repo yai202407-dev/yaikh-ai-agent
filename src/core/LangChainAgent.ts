@@ -228,6 +228,10 @@ export class LangChainAgent implements IAgent {
             } else if (cleanText) {
                 cleanResponse = cleanText;
             }
+            
+            if (!cleanResponse || cleanResponse.trim() === '') {
+                cleanResponse = "I'm sorry, I couldn't process this request properly. The answer may be too large, or I lack the proper information. Please try rephrasing or narrowing down your search.";
+            }
 
             // Save to memory
             await this.memory.saveMessage(userId, 'user', message);
@@ -398,13 +402,18 @@ export class LangChainAgent implements IAgent {
 
             let { cleanResponse, suggestions } = this.parseSuggestions(finalResponse);
             const { cleanText, chartData } = this.parseChartData(cleanResponse);
+            
+            let finalOutput = cleanText || cleanResponse;
+            if (!finalOutput || finalOutput.trim() === '') {
+                finalOutput = "I'm sorry, I couldn't process this request properly. The answer may be too large, or I lack the proper information. Please try rephrasing or narrowing down your search.";
+            }
 
             // Save to memory
             await this.memory.saveMessage(userId, 'user', message);
-            await this.memory.saveMessage(userId, 'assistant', finalResponse);
+            await this.memory.saveMessage(userId, 'assistant', finalOutput);
 
             return {
-                response: cleanText || cleanResponse,
+                response: finalOutput,
                 domain: 'general',
                 usedTools,
                 usage: totalUsage,
