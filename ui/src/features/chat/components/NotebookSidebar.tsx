@@ -4,9 +4,10 @@ interface NotebookSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     onToolClick?: (toolName: string) => void;
+    hasQualityData?: boolean;
 }
 
-export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClose, onToolClick }) => {
+export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClose, onToolClick, hasQualityData }) => {
     if (!isOpen) return null;
 
     const primaryTools = [
@@ -69,7 +70,7 @@ export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClos
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0d1117]">
                 <div className="flex items-center gap-2">
                     <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                    <h2 className="text-sm font-bold text-white tracking-wide">Data Workspace</h2>
+                    <h2 className="text-sm font-bold text-white tracking-wide">Yai2 GPT Deck</h2>
                 </div>
                 <button onClick={onClose} className="text-white/50 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -114,12 +115,17 @@ export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClos
                     {primaryTools.map((tool) => (
                         <button 
                             key={tool.name} 
-                            onClick={() => onToolClick?.(tool.name)}
-                            className="flex items-center gap-3 bg-[#1C2128]/80 hover:bg-[#22272E] border border-white/5 rounded-xl px-4 py-3.5 transition-all hover:border-orange-500/30 hover:shadow-[0_0_15px_rgba(249,115,22,0.1)] group overflow-hidden relative text-left"
+                            onClick={() => hasQualityData && onToolClick?.(tool.name)}
+                            disabled={!hasQualityData}
+                            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all group overflow-hidden relative text-left ${
+                                hasQualityData 
+                                ? 'bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.15)] cursor-pointer' 
+                                : 'bg-[#1C2128]/40 border border-white/5 opacity-50 cursor-not-allowed'
+                            }`}
                         >
                             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-                            <svg className="w-5 h-5 text-white/50 group-hover:text-orange-400 transition-colors drop-shadow-[0_0_5px_rgba(255,255,255,0.1)] group-hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.5)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tool.icon} /></svg>
-                            <span className="text-[13px] font-medium text-white/60 group-hover:text-white/90">{tool.name}</span>
+                            <svg className={`w-5 h-5 flex-shrink-0 transition-colors drop-shadow-[0_0_5px_rgba(255,255,255,0.1)] ${hasQualityData ? 'text-orange-400 group-hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tool.icon} /></svg>
+                            <span className={`text-[13px] font-medium transition-colors ${hasQualityData ? 'text-orange-100' : 'text-white/40'}`}>{tool.name}</span>
                         </button>
                     ))}
                     
