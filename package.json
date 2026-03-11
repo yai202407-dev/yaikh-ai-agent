@@ -25,6 +25,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/firestore": "^8.3.0",
     "@langchain/community": "^1.1.12",
     "@langchain/core": "^1.1.18",
     "@langchain/google-genai": "^2.1.15",
