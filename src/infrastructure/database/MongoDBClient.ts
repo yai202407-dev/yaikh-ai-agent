@@ -346,19 +346,19 @@ let mongoClient: MongoDBClient | null = null;
 
 export function getMongoClient(): MongoDBClient {
     if (!mongoClient) {
-        let connectionString = process.env.DB_DSN || '';
+        const connectionString = process.env.DB_DSN || '';
         const databaseName = process.env.DB_DATABASE || 'ym_eco_board';
 
-        // Override using the known working Atlas credentials for both Dev and Prod to guarantee connection
-        if (process.env.NODE_ENV === 'production' || !connectionString) {
-            console.log("⚠️ Overriding connection string to use known Working Atlas Cluster.");
-            connectionString = 'mongodb+srv://yai202407_db_user:w4T0FwTGNzpAjUz7@cluster0.d4ozsqu.mongodb.net/ym_eco_board?retryWrites=true&w=majority';
+        if (!connectionString) {
+            throw new Error('❌ DB_DSN is not set in .env. Please configure your MongoDB connection string.');
         }
 
+        // Safe log — masks the password in the URL
         const safeLogUrl = connectionString.replace(/:([^:@]+)@/, ':****@');
-        console.log(`🔌 Initializing MongoDBClient with URL: ${safeLogUrl}`);
+        console.log(`🔌 Initializing MongoDBClient → ${safeLogUrl} [db: ${databaseName}]`);
 
         mongoClient = new MongoDBClient(connectionString, databaseName);
     }
     return mongoClient;
 }
+

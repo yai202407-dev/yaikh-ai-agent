@@ -1,5 +1,6 @@
 import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
 import { ChatVertexAI } from '@langchain/google-vertexai';
+import type { Firestore } from '@google-cloud/firestore';
 
 interface FailedLog {
     sessionId: string;
@@ -11,7 +12,15 @@ interface FailedLog {
 
 export class ChatManagerEngine {
     private llm: ChatVertexAI;
-    private db = getFirestoreDb();
+    private _db: Firestore | null = null;
+
+    /** Lazy getter — only connects to Firestore when first used */
+    private get db(): Firestore {
+        if (!this._db) {
+            this._db = getFirestoreDb();
+        }
+        return this._db;
+    }
 
     constructor() {
         this.llm = new ChatVertexAI({

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { LangChainAgent } from './core/LangChainAgent.js';
 import { FirestoreMemoryStore } from './core/FirestoreMemoryStore.js';
+import { InMemoryStore } from './core/InMemoryStore.js';
 import { ToolRegistry } from './core/ToolRegistry.js';
 import { createServer } from './api/server.js';
 import { getDynamicSystemPrompt } from './config/prompts.js';
@@ -50,8 +51,15 @@ async function bootstrap() {
 
     // Initialize infrastructure
     console.log('⚙️ Initializing infrastructure...');
-    const memory = new FirestoreMemoryStore();
-    console.log(`   ✓ Memory: Google Cloud Firestore (projectId: ai-agent-489507)`);
+    const MEMORY_PROVIDER = (process.env.MEMORY_PROVIDER || 'memory') as 'firestore' | 'memory';
+    let memory: FirestoreMemoryStore | InMemoryStore;
+    if (MEMORY_PROVIDER === 'firestore') {
+        memory = new FirestoreMemoryStore();
+        console.log(`   ✓ Memory: Google Cloud Firestore (projectId: ai-agent-489507)`);
+    } else {
+        memory = new InMemoryStore(MAX_HISTORY);
+        console.log(`   ✓ Memory: In-Memory (local dev mode — data resets on restart)`);
+    }
 
     // LangSmith Tracking Check
     if (process.env.LANGCHAIN_TRACING_V2 === 'true') {

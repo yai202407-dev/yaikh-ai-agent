@@ -156,6 +156,10 @@ export function createRoutes(agent: IAgent): Router {
             return res.json({ logs });
         } catch (error: any) {
             console.error('❌ Fetch chat-log error:', error);
+            // Gracefully degrade if Firestore is not available (e.g. local dev)
+            if (error.message?.includes('not connected') || error.message?.includes('credentials')) {
+                return res.status(503).json({ error: 'Chat log unavailable: Firestore not configured in this environment.' });
+            }
             return res.status(500).json({ error: 'Failed to fetch chat logs' });
         }
     });
