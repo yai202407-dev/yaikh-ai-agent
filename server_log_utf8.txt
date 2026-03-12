@@ -229,3 +229,165 @@ Context: trace=019ce13a-9275-7
 7c3-8f54-fc8b4ed22419,id=019ce
 13a-9275-77c3-8f54-fc8b4ed2241
 9
+4:18:20 PM [tsx] change in ./src\skills\agent\AgentTwoTool.ts Restarting...
+c🚀 Starting AI Agent (LangChain Edition)...
+
+⚙️ Initializing infrastructure...
+   ✓ Memory: In-Memory (local dev mode — data resets on restart)
+   ⚠️  Monitoring: LangSmith is NOT enabled
+
+🔧 Registering tools...
+   ✓ Registered 48 tools
+
+🧠 Initializing LangChain agent orchestrator...
+🧠 [LangChain] Initializing Gemini Agent (gemini-2.5-flash)...
+   ✓ Agent orchestrator ready
+
+🌐 Starting API server...
+
+==================================================
+🚀 AI Agent API Server Started
+==================================================
+📍 Chat UI:       http://localhost:8001
+📡 API:           http://localhost:8001/api/ai-agent
+📊 Reports URL:   http://localhost:8001/api/reports
+==================================================
+
+(node:20972) 
+MetadataLookupWarning: 
+received unexpected error = 
+All promises were rejected 
+code = UNKNOWN
+(Use `node --trace-warnings 
+...` to show where the 
+warning was created)
+4:18:32 PM [tsx] change in ./src\core\LangChainAgent.ts Restarting...
+c🚀 Starting AI Agent (LangChain Edition)...
+
+⚙️ Initializing infrastructure...
+   ✓ Memory: In-Memory (local dev mode — data resets on restart)
+   ⚠️  Monitoring: LangSmith is NOT enabled
+
+🔧 Registering tools...
+   ✓ Registered 48 tools
+
+🧠 Initializing LangChain agent orchestrator...
+🧠 [LangChain] Initializing Gemini Agent (gemini-2.5-flash)...
+   ✓ Agent orchestrator ready
+
+🌐 Starting API server...
+
+==================================================
+🚀 AI Agent API Server Started
+==================================================
+📍 Chat UI:       http://localhost:8001
+📡 API:           http://localhost:8001/api/ai-agent
+📊 Reports URL:   http://localhost:8001/api/reports
+==================================================
+
+(node:21884) 
+MetadataLookupWarning: 
+received unexpected error = 
+All promises were rejected 
+code = UNKNOWN
+(Use `node --trace-warnings 
+...` to show where the 
+warning was created)
+4:18:43 PM [tsx] change in ./src\api\routes.ts Restarting...
+c🚀 Starting AI Agent (LangChain Edition)...
+
+⚙️ Initializing infrastructure...
+   ✓ Memory: In-Memory (local dev mode — data resets on restart)
+   ⚠️  Monitoring: LangSmith is NOT enabled
+
+🔧 Registering tools...
+   ✓ Registered 48 tools
+
+🧠 Initializing LangChain agent orchestrator...
+🧠 [LangChain] Initializing Gemini Agent (gemini-2.5-flash)...
+   ✓ Agent orchestrator ready
+
+🌐 Starting API server...
+
+==================================================
+🚀 AI Agent API Server Started
+==================================================
+📍 Chat UI:       http://localhost:8001
+📡 API:           http://localhost:8001/api/ai-agent
+📊 Reports URL:   http://localhost:8001/api/reports
+==================================================
+
+(node:28820) 
+MetadataLookupWarning: 
+received unexpected error = 
+All promises were rejected 
+code = UNKNOWN
+(Use `node --trace-warnings 
+...` to show where the 
+warning was created)
+🚀 Processing message: Can you check my car booking status using the secondary enterprise AI agent? Token present: false
+⚠️ Failed to fetch dynamic 
+system prompt from MongoDB, 
+using fallback: Error: ❌ 
+DB_DSN is not set in .env. 
+Please configure your MongoDB 
+connection string.
+    at getMongoClient (C:\Proj
+ects\yaikh-ai-agent\src\infras
+tructure\database\MongoDBClien
+t.ts:353:19)
+    at LangChainAgent.getDynam
+icSystemPrompt (C:\Projects\ya
+ikh-ai-agent\src\config\prompt
+s.ts:69:24)
+    at LangChainAgent.process 
+(C:\Projects\yaikh-ai-agent\sr
+c\core\LangChainAgent.ts:97:89
+)
+    at process.processTicksAnd
+Rejections (node:internal/proc
+ess/task_queues:105:5)
+    at async <anonymous> (C:\P
+rojects\yaikh-ai-agent\src\api
+\routes.ts:93:28)
+🧠 [LangChain] Initial LLM call starting...
+💥 Critical Agent Error: 
+GoogleGenerativeAIFetchError: 
+[GoogleGenerativeAI Error]: 
+Error fetching from https://ge
+nerativelanguage.googleapis.co
+m/v1beta/models/gemini-2.5-fla
+sh:generateContent: [400 Bad 
+Request] Request has empty 
+input.
+    at handleResponseNotOk (fi
+le:///C:/Projects/yaikh-ai-age
+nt/node_modules/@google/genera
+tive-ai/dist/index.mjs:432:11)
+    at process.processTicksAnd
+Rejections (node:internal/proc
+ess/task_queues:105:5)
+    at async makeRequest (file
+:///C:/Projects/yaikh-ai-agent
+/node_modules/@google/generati
+ve-ai/dist/index.mjs:401:9)
+    at async generateContent (
+file:///C:/Projects/yaikh-ai-a
+gent/node_modules/@google/gene
+rative-ai/dist/index.mjs:865:2
+2)
+    at async <anonymous> (C:\P
+rojects\yaikh-ai-agent\node_mo
+dules\@langchain\google-genai\
+src\chat_models.ts:1024:18)
+    at async pRetry (C:\Projec
+ts\yaikh-ai-agent\node_modules
+\@langchain\core\src\utils\p-r
+etry\index.js:236:22)
+    at async run (C:\Projects\
+yaikh-ai-agent\node_modules\p-
+queue\dist\index.js:163:29) {
+  status: 400,
+  statusText: 'Bad Request',
+  errorDetails: undefined
+}

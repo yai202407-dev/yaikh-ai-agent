@@ -110,8 +110,9 @@ export class LangChainAgent implements IAgent {
                 }
             }
 
-            // Add current message
-            messages.push(new HumanMessage(message));
+            // Add current message (cast String object back to primitive string to avoid empty input bugs with Gemini)
+            const rawMessage = typeof message === 'string' ? message : String(message);
+            messages.push(new HumanMessage(rawMessage));
 
             // Invoke LLM and handle tool calls
             console.log(`🧠 [LangChain] Initial LLM call starting...`);
@@ -297,7 +298,9 @@ export class LangChainAgent implements IAgent {
             for (const msg of history) {
                 messages.push(msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content));
             }
-            messages.push(new HumanMessage(message));
+            // Cast message to primitive string
+            const rawMessage = typeof message === 'string' ? message : String(message);
+            messages.push(new HumanMessage(rawMessage));
 
             let iterations = 0;
             const maxIterations = 8;
