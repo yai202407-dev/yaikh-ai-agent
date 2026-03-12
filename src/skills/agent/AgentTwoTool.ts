@@ -12,6 +12,7 @@ export class AgentTwoTool implements ITool {
     async execute(params?: Record<string, unknown>): Promise<string> {
         let question = '';
         let userId = 'orchestrator-bot';
+        let systemToken = '';
 
         if (params && typeof params.question === 'string') {
             question = params.question;
@@ -22,6 +23,10 @@ export class AgentTwoTool implements ITool {
         if (params && typeof params.userId === 'string') {
             userId = params.userId;
         }
+        
+        if (params && typeof params.systemToken === 'string') {
+            systemToken = params.systemToken;
+        }
 
         const endpoint = process.env.AGENT_TWO_ENDPOINT || 'https://yai-agent2.yaikh.com';
 
@@ -29,9 +34,23 @@ export class AgentTwoTool implements ITool {
             console.log(`🤖 Delegating to Agent 2 (${endpoint})... Question: "${question}"`);
             
             // Expected endpoint based on docs-agent/api-design.md: POST /api/agent/chat
-            const response = await axios.post(`${endpoint}/api/agent/chat`, {
+            const payload: any = {
                 message: question,
                 userId: userId
+            };
+            
+            // Inject the priority token appropriately 
+            const reqHeaders: any = { 'Content-Type': 'application/json' };
+            if (systemToken) {
+                if (systemToken.startsWith('Bearer ')) {
+                    reqHeaders['Authorization'] = systemToken;
+                } else {
+                    payload['systemToken'] = systemToken;
+                }
+            }
+
+            const response = await axios.post(`${endpoint}/api/agent/chat`, payload, {
+                headers: reqHeaders
             });
 
             if (response.data && response.data.reply) {
@@ -70,6 +89,10 @@ export class AgentTwoTool implements ITool {
                         userId: {
                             type: 'string',
                             description: 'Optional user identifier from the original prompt. Defaults to "orchestrator-bot".'
+                        },
+                        systemToken: {
+                            type: 'string',
+                            description: 'Optional authentication token from the requesting client to pass along to Agent 2 for permission checks.'
                         }
                     },
                     required: ['question']

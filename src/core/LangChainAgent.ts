@@ -95,9 +95,10 @@ export class LangChainAgent implements IAgent {
 
             // Fetch dynamic prompt if it's a function
             const resolvedPrompt = typeof this.systemPrompt === 'function' ? await this.systemPrompt() : this.systemPrompt;
+            const systemToken = (message as any).__systemToken || 'None Provided';
 
             const messages: any[] = [
-                new SystemMessage(`Current Date & Time: ${currentDateTime}\n\n${resolvedPrompt}`)
+                new SystemMessage(`Current Date & Time: ${currentDateTime}\nSystem Token: ${systemToken}\n\n${resolvedPrompt}`)
             ];
 
             // Add conversation history
@@ -290,7 +291,8 @@ export class LangChainAgent implements IAgent {
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
             const resolvedPrompt = typeof this.systemPrompt === 'function' ? await this.systemPrompt() : this.systemPrompt;
-            const messages: any[] = [new SystemMessage(`Current Date & Time: ${currentDateTime}\n\n${resolvedPrompt}`)];
+            const systemToken = (message as any).__systemToken || 'None Provided';
+            const messages: any[] = [new SystemMessage(`Current Date & Time: ${currentDateTime}\nSystem Token: ${systemToken}\n\n${resolvedPrompt}`)];
 
             for (const msg of history) {
                 messages.push(msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content));

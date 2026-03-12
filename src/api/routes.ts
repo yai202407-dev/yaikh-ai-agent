@@ -57,9 +57,15 @@ export function createRoutes(agent: IAgent): Router {
                 res.setHeader('Content-Type', 'text/plain; charset=utf-8');
                 res.setHeader('Transfer-Encoding', 'chunked');
 
-                console.log('🚀 Streaming message:', message);
+                console.log('🚀 Streaming message:', message, 'Token present:', !!userToken);
 
-                const result = await agent.stream(userId, message, (chunk) => {
+                // Quick trick: if userToken exists, we append it to the message so LLM can use it
+                const orchestratorParams = new String(message) as any;
+                if (userToken) {
+                    orchestratorParams.__systemToken = userToken;
+                }
+
+                const result = await agent.stream(userId, orchestratorParams, (chunk) => {
                     res.write(chunk);
                 });
 
@@ -76,8 +82,15 @@ export function createRoutes(agent: IAgent): Router {
             }
 
             // --- STANDARD MODE ---
-            console.log('🚀 Processing message:', message);
-            const result = await agent.process(userId, message);
+            console.log('🚀 Processing message:', message, 'Token present:', !!userToken);
+            
+            // Quick trick: if userToken exists, we append it to the message so LLM can use it
+            const orchestratorParams = new String(message) as any;
+            if (userToken) {
+                orchestratorParams.__systemToken = userToken;
+            }
+
+            const result = await agent.process(userId, orchestratorParams);
 
             return res.json({
                 response: result.response,
