@@ -21,6 +21,7 @@ import { REPORT_TOOLS } from './skills/report/ReportTools.js';
 import { GOOGLE_DRIVE_TOOLS } from './skills/data/GoogleDriveTools.js';
 import { DYNAMIC_MONGO_TOOLS } from './skills/data/DynamicMongoTools.js';
 import { VERTEX_AI_TOOLS } from './skills/report/VertexAITools.js';
+import { AGENT_TWO_TOOLS } from './skills/agent/AgentTwoTool.js';
 
 /**
  * Bootstrap and start the AI Agent application
@@ -128,6 +129,11 @@ async function bootstrap() {
     // Register Vertex AI & Notebook LM Tools
     VERTEX_AI_TOOLS.forEach(tool => {
         toolRegistry.register(tool, 'report');
+    });
+
+    // Register YAI Agent 2 tools
+    AGENT_TWO_TOOLS.forEach(tool => {
+        toolRegistry.register(tool, 'general');
     });
 
     console.log(`   ✓ Registered ${toolRegistry.getAllTools().length} tools`);

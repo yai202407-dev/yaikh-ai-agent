@@ -5,7 +5,7 @@ async function askYai2() {
 
     const requestBody = {
         user_id: "antigravity-test-01",
-        message: "Hi Yai2! Can you tell me what collections exist in the HR database?",
+        message: "Can you check my car booking status using the secondary enterprise AI agent?",
         stream: false
     };
 
