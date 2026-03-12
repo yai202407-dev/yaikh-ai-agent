@@ -13,6 +13,7 @@ export class AgentTwoTool implements ITool {
         let question = '';
         let userId = 'orchestrator-bot';
         let systemToken = '';
+        let subAgent = 'auto';
 
         if (params && typeof params.question === 'string') {
             question = params.question;
@@ -28,12 +29,21 @@ export class AgentTwoTool implements ITool {
             systemToken = params.systemToken;
         }
 
-        const endpoint = process.env.AGENT_TWO_ENDPOINT || 'https://yai-agent2.yaikh.com';
+        if (params && typeof params.subAgent === 'string') {
+            subAgent = params.subAgent;
+        }
+
+        const baseUrl = process.env.AGENT_TWO_ENDPOINT || 'https://yai-agent2.yaikh.com';
+        
+        // Determine the correct endpoint based on subAgent selection
+        const endpointUrl = subAgent === 'auto' || !subAgent 
+            ? `${baseUrl}/api/agent/chat` 
+            : `${baseUrl}/api/agent/direct/${subAgent}/chat`;
 
         try {
-            console.log(`🤖 Delegating to Agent 2 (${endpoint})... Question: "${question}"`);
+            console.log(`🤖 Delegating to Agent 2 (${endpointUrl})... Question: "${question}"`);
             
-            // Expected endpoint based on docs-agent/api-design.md: POST /api/agent/chat
+            // Expected endpoint based on docs-agent/api-design.md
             const payload: any = {
                 message: question,
                 userId: userId
@@ -49,7 +59,7 @@ export class AgentTwoTool implements ITool {
                 }
             }
 
-            const response = await axios.post(`${endpoint}/api/agent/chat`, payload, {
+            const response = await axios.post(endpointUrl, payload, {
                 headers: reqHeaders
             });
 
@@ -93,6 +103,11 @@ export class AgentTwoTool implements ITool {
                         systemToken: {
                             type: 'string',
                             description: 'Optional authentication token from the requesting client to pass along to Agent 2 for permission checks.'
+                        },
+                        subAgent: {
+                            type: 'string',
+                            description: 'The specific sub-agent to target. Allowed values: "chitchat", "admin", "booking", "purchase", "auto". Use "booking" for cars, "purchase" for requests, "admin" for database/monitoring queries, and "auto" if unsure.',
+                            enum: ['chitchat', 'admin', 'booking', 'purchase', 'auto']
                         }
                     },
                     required: ['question']
