@@ -6,7 +6,7 @@ import { NotebookService } from '../skills/notebook/NotebookService.js';
 import { ChatManagerEngine } from '../manager/ChatManagerEngine.js';
 
 // Use memory storage for ephemeral processing before pushing to GCP Bucket
-const upload = multer({ 
+const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 50 * 1024 * 1024 } // 50MB file limit
 });
@@ -47,7 +47,7 @@ export function createRoutes(agent: IAgent): Router {
         try {
             const { user_id, message, stream } = req.body;
             const userId = user_id;
-
+            const userToken = req.headers.authorization;
             if (!message || !userId) {
                 return res.status(400).json({ error: 'Both "message" and "userId" are required' });
             }
@@ -175,20 +175,20 @@ export function createRoutes(agent: IAgent): Router {
             }
 
             console.log(`[Notebook Upload] Received file: ${file.originalname} (${file.mimetype})`);
-            
+
             // Process the buffer via our GCS/Speech/Parser Engine
             const extractedContent = await notebookService.processNotebookSource(
-                file.buffer, 
-                file.originalname, 
+                file.buffer,
+                file.originalname,
                 file.mimetype
             );
 
             // Return the extracted text so the ChatUI can instantly append it to the conversation context
-            return res.json({ 
+            return res.json({
                 success: true,
                 filename: file.originalname,
                 message: "Source ingested successfully into Google Cloud Storage.",
-                content: extractedContent 
+                content: extractedContent
             });
 
         } catch (error: any) {
@@ -203,7 +203,7 @@ export function createRoutes(agent: IAgent): Router {
     router.post('/api/manager/scan', async (_req: Request, res: Response) => {
         try {
             const report = await chatManagerEngine.scanAndAnalyzeFailures();
-            return res.json({ 
+            return res.json({
                 success: true,
                 message: "Chat Manager scan completed.",
                 report: report
