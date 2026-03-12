@@ -11,13 +11,11 @@ export const ChatPage: React.FC = () => {
         messages,
         isLoading,
         sendMessage,
+        activeDeckTools,
     } = useChat();
 
     const { config, availableModels, updateConfig } = useAgentConfig();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-    // Heuristic: If we have multiple messages, assume there is data available for the Generators
-    const hasQualityData = messages.some(m => m.role === 'assistant' && m.content.length > 80);
 
     return (
         <>
@@ -43,7 +41,7 @@ export const ChatPage: React.FC = () => {
                     const promptText = `Generate a ${toolName} based on the ongoing context in my workspace.`;
                     await sendMessage(promptText);
                 }}
-                hasQualityData={hasQualityData}
+                activeDeckTools={activeDeckTools}
                 >
                 <MessageList messages={messages} isLoading={isLoading} />
             </ChatLayout>

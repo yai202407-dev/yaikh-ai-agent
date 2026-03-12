@@ -1,0 +1,104 @@
+﻿­ƒÜÇ Starting AI Agent (LangChain Edition)...
+
+ÔÜÖ´©Å Initializing infrastructure...
+­ƒöÑ Connecting to Google Cloud Firestore [ai-agent-489507]...
+Ô£à Connected to Firestore database.
+   Ô£ô Memory: Google Cloud Firestore (projectId: ai-agent-489507)
+   Ô£ô Monitoring: LangSmith enabled (Project: Yorkmars Agent)
+
+­ƒöº Registering tools...
+   Ô£ô Registered 47 tools
+
+­ƒºá Initializing LangChain agent orchestrator...
+­ƒºá [LangChain] Initializing Gemini Agent (gemini-2.5-flash)...
+   Ô£ô Agent orchestrator ready
+
+­ƒîÉ Starting API server...
+
+==================================================
+­ƒÜÇ AI Agent API Server Started
+==================================================
+­ƒôì Chat UI:       http://localhost:8001
+­ƒôí API:           http://localhost:8001/api/ai-agent
+­ƒôè Reports URL:   http://localhost:8001/api/reports
+==================================================
+
+­ƒÜÇ Processing message: Hi Yai2! Can you tell me what collections exist in the HR database?
+ÔÜá´©Å Overriding connection string to use known Working Atlas Cluster.
+­ƒöî Initializing MongoDBClient with URL: mongodb+srv://yai202407_db_user:****@cluster0.d4ozsqu.mongodb.net/ym_eco_board?retryWrites=true&w=majority
+­ƒöî Connecting to MongoDB...
+Ô£à Connected to MongoDB: ym_eco_board
+­ƒºá [LangChain] Initial LLM call starting...
+ÔÅ▒´©Å  Initial LLM call took 2.0s
+­ƒöº Tool calls found: 1
+­ƒöº [LangChain] Iteration 1: Executing 1 tool(s)...
+  Ôå│ Tool map_all_collections starting...
+  Ô£à Tool map_all_collections finished in 0.3s. Result length: 2609
+­ƒºá [LangChain] Asking LLM for follow-up...
+ÔÅ▒´©Å  Follow-up LLM call took 1.7s
+Ô£¿ [LangChain] Process finished. Total time: 4.0s
+[FirestoreMemoryStore] Saving message for antigravity-test-01...
+[FirestoreMemoryStore] Successfully saved message for antigravity-test-01.
+[FirestoreMemoryStore] Saving message for antigravity-test-01...
+[FirestoreMemoryStore] Successfully saved message for antigravity-test-01.
+­ƒÜÇ Sending response back to API...
+node.exe : Failed to Failed to send multipart request. Received status [403]: Forbidden. Message:
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Failed to Faile...idden. Message::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Context: trace=019cdb94-8c24-770e-ab17-097381e04674,id=019cdb94-8c24-770e-ab17-097381e04674; 
+trace=019cdb94-93d0-703c-bac4-e6dc9eab9360,id=019cdb94-93d0-703c-bac4-e6dc9eab9360; 
+trace=019cdb94-94ed-7077-ba9e-a8bde2d6b670,id=019cdb94-94ed-7077-ba9e-a8bde2d6b670
+­ƒÜÇ Processing message: who are the staffs in the csr department
+­ƒºá [LangChain] Initial LLM call starting...
+Failed to Failed to send multipart request. Received status [403]: Forbidden. Message:
+
+Context: trace=019cdb95-59b5-7185-a12a-132f91cf6e60,id=019cdb95-59b5-7185-a12a-132f91cf6e60
+ÔÅ▒´©Å  Initial LLM call took 1.7s
+­ƒöº Tool calls found: 1
+­ƒöº [LangChain] Iteration 1: Executing 1 tool(s)...
+  Ôå│ Tool map_all_collections starting...
+  Ô£à Tool map_all_collections finished in 0.3s. Result length: 2609
+­ƒºá [LangChain] Asking LLM for follow-up...
+Failed to Failed to send multipart request. Received status [403]: Forbidden. Message:
+
+Context: trace=019cdb95-603e-7469-b206-eb7dc3273771,id=019cdb95-603e-7469-b206-eb7dc3273771; 
+trace=019cdb95-59b5-7185-a12a-132f91cf6e60,id=019cdb95-59b5-7185-a12a-132f91cf6e60
+Failed to Failed to send multipart request. Received status [403]: Forbidden. Message:
+
+Context: trace=019cdb95-615b-74c4-ab1f-53ce6fd816a2,id=019cdb95-615b-74c4-ab1f-53ce6fd816a2; 
+trace=019cdb95-603e-7469-b206-eb7dc3273771,id=019cdb95-603e-7469-b206-eb7dc3273771
+ÔÅ▒´©Å  Follow-up LLM call took 1.4s
+­ƒöº [LangChain] Iteration 2: Executing 1 tool(s)...
+  Ôå│ Tool inspect_collection_schema starting...
+  Ô£à Tool inspect_collection_schema finished in 0.1s. Result length: 2724
+­ƒºá [LangChain] Asking LLM for follow-up...
+Failed to Failed to send multipart request. Received status [403]: Forbidden. Message:
+
+Context: trace=019cdb95-66f9-75bd-8372-8215cf99280b,id=019cdb95-66f9-75bd-8372-8215cf99280b; 
+trace=019cdb95-676d-772a-81ff-19a9841435e3,id=019cdb95-676d-772a-81ff-19a9841435e3; 
+trace=019cdb95-615b-74c4-ab1f-53ce6fd816a2,id=019cdb95-615b-74c4-ab1f-53ce6fd816a2
+ÔÅ▒´©Å  Follow-up LLM call took 1.8s
+­ƒöº [LangChain] Iteration 3: Executing 1 tool(s)...
+  Ôå│ Tool explore_collection_data starting...
+  Ô£à Tool explore_collection_data finished in 0.2s. Result length: 1816
+­ƒºá [LangChain] Asking LLM for follow-up...
+Failed to Failed to send multipart request. Received status [403]: Forbidden. Message:
+
+Context: trace=019cdb95-6e6f-72fe-be1a-7d6f98f44f3d,id=019cdb95-6e6f-72fe-be1a-7d6f98f44f3d; 
+trace=019cdb95-6f10-7548-b4fb-2fec915f6797,id=019cdb95-6f10-7548-b4fb-2fec915f6797; 
+trace=019cdb95-676d-772a-81ff-19a9841435e3,id=019cdb95-676d-772a-81ff-19a9841435e3
+ÔÅ▒´©Å  Follow-up LLM call took 1.5s
+Ô£¿ [LangChain] Process finished. Total time: 7.0s
+[FirestoreMemoryStore] Saving message for test...
+[FirestoreMemoryStore] Successfully saved message for test.
+[FirestoreMemoryStore] Saving message for test...
+[FirestoreMemoryStore] Successfully saved message for test.
+­ƒÜÇ Sending response back to API...
+Failed to Failed to send multipart request. Received status [403]: Forbidden. Message:
+
+Context: trace=019cdb95-6f10-7548-b4fb-2fec915f6797,id=019cdb95-6f10-7548-b4fb-2fec915f6797

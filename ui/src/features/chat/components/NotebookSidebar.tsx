@@ -4,10 +4,10 @@ interface NotebookSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     onToolClick?: (toolName: string) => void;
-    hasQualityData?: boolean;
+    activeDeckTools?: string[];
 }
 
-export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClose, onToolClick, hasQualityData }) => {
+export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClose, onToolClick, activeDeckTools = [] }) => {
     if (!isOpen) return null;
 
     const primaryTools = [
@@ -112,22 +112,29 @@ export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({ isOpen, onClos
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-3">AI Tools</h3>
                 
                 <div className="flex flex-col gap-2">
-                    {primaryTools.map((tool) => (
-                        <button 
-                            key={tool.name} 
-                            onClick={() => hasQualityData && onToolClick?.(tool.name)}
-                            disabled={!hasQualityData}
-                            className={`flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all group overflow-hidden relative text-left ${
-                                hasQualityData 
-                                ? 'bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.15)] cursor-pointer' 
-                                : 'bg-[#1C2128]/40 border border-white/5 opacity-50 cursor-not-allowed'
-                            }`}
-                        >
-                            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-                            <svg className={`w-5 h-5 flex-shrink-0 transition-colors drop-shadow-[0_0_5px_rgba(255,255,255,0.1)] ${hasQualityData ? 'text-orange-400 group-hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tool.icon} /></svg>
-                            <span className={`text-[13px] font-medium transition-colors ${hasQualityData ? 'text-orange-100' : 'text-white/40'}`}>{tool.name}</span>
-                        </button>
-                    ))}
+                    {primaryTools.map((tool) => {
+                        // Check if this tool is recommended by the AI's latest response or if it matches by partial name
+                        const isActive = activeDeckTools.some((activeTool: string) => 
+                            tool.name.toLowerCase().includes(activeTool.toLowerCase()) || activeTool.toLowerCase().includes(tool.name.replace('...', '').toLowerCase())
+                        );
+
+                        return (
+                            <button 
+                                key={tool.name} 
+                                onClick={() => isActive && onToolClick?.(tool.name)}
+                                disabled={!isActive}
+                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all group overflow-hidden relative text-left ${
+                                    isActive 
+                                    ? 'bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.15)] cursor-pointer' 
+                                    : 'bg-[#1C2128]/40 border border-white/5 opacity-50 cursor-not-allowed'
+                                }`}
+                            >
+                                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                                <svg className={`w-5 h-5 flex-shrink-0 transition-colors drop-shadow-[0_0_5px_rgba(255,255,255,0.1)] ${isActive ? 'text-orange-400 group-hover:drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tool.icon} /></svg>
+                                <span className={`text-[13px] font-medium transition-colors ${isActive ? 'text-orange-100' : 'text-white/40'}`}>{tool.name}</span>
+                            </button>
+                        );
+                    })}
                     
                     <div className="h-4"></div> {/* Space separator */}
                     <div className="flex items-center gap-2 mb-1">

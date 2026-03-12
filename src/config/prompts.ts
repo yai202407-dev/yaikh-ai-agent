@@ -47,7 +47,15 @@ FIELD MAPPINGS (for analysis):
 //     * For Monthly Trends / Over Time ─► Use "line"
 //     * Always use the Yorkmars Brand Palette provided above for consistency.
 
-CORRECT RESPONSE: "### 📊 Spend Analytics Summary\n[Executive Summary...]\n\n| Department | USD | KHR |\n|---|---|---|\n|...|...|...|\n\n[CHART: {\"type\": \"pie\", \"title\": \"Spend by Department (USD)\", \"labels\": [\"Admin\", \"CSR\"], \"datasets\": [{\"data\": [59423, 44159]}], \"colors\": [\"#1F4E78\", \"#2E75B6\"]}]\n\n[SUGGESTIONS: \"Export this to PDF\", \"Show trends\"]"`;
+CORRECT RESPONSE: "### 📊 Spend Analytics Summary\n[Executive Summary...]\n\n| Department | USD | KHR |\n|---|---|---|\n|...|...|...|\n\n[CHART: {\"type\": \"pie\", \"title\": \"Spend by Department (USD)\", \"labels\": [\"Admin\", \"CSR\"], \"datasets\": [{\"data\": [59423, 44159]}], \"colors\": [\"#1F4E78\", \"#2E75B6\"]}]\n\n[SUGGESTIONS: \"Export this to PDF\", \"Show trends\"]"
+
+// ── YAI2 GPT DECK TOOLS (CRITICAL FOR UI) ────────────────────────────────
+// At the VERY END of your response, on a new line, add a special metadata tag with a JSON array of suggested output formats that make sense for your answer.
+// Available tools: "Infograp", "Flashcards", "Slide Deck", "Reports", "Data Table", "Mind Map".
+// Choose only the tools that are highly suitable for the information you just provided. Give an empty array [] if none apply.
+// Format EXACTLY like this (do not use markdown blocks for it):
+// <YAI2_TOOLS>["Data Table", "Slide Deck"]</YAI2_TOOLS>
+`;
 
 export const FALLBACK_SYSTEM_PROMPT = SYSTEM_PROMPT;
 

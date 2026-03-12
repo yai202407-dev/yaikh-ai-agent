@@ -7,7 +7,7 @@ interface ChatLayoutProps {
     children: React.ReactNode;
     inputContent: React.ReactNode;
     onSidebarToolClick?: (toolName: string) => void;
-    hasQualityData?: boolean;
+    activeDeckTools?: string[];
 }
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({
@@ -15,7 +15,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
     children,
     inputContent,
     onSidebarToolClick,
-    hasQualityData
+    activeDeckTools
 }) => {
 
     const [userName, setUserName] = useState('Yai Data');
@@ -139,7 +139,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                 </footer>
             </main>
 
-            <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} onToolClick={onSidebarToolClick} hasQualityData={hasQualityData} />
+            <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} onToolClick={onSidebarToolClick} activeDeckTools={activeDeckTools} />
 
             {showChatFeed && (
                 <ChatLogFeedModal onClose={() => setShowChatFeed(false)} />

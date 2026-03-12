@@ -27,3 +27,4 @@ coverage/
 
 # Data Sync Engine
 src/infrastructure/data-sync
+service-account-key.json

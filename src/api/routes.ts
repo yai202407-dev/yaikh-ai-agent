@@ -3,6 +3,7 @@ import { IAgent } from '../core/interfaces/IAgent.js';
 import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
 import multer from 'multer';
 import { NotebookService } from '../skills/notebook/NotebookService.js';
+import { ChatManagerEngine } from '../manager/ChatManagerEngine.js';
 
 // Use memory storage for ephemeral processing before pushing to GCP Bucket
 const upload = multer({ 
@@ -10,6 +11,7 @@ const upload = multer({
     limits: { fileSize: 50 * 1024 * 1024 } // 50MB file limit
 });
 const notebookService = new NotebookService();
+const chatManagerEngine = new ChatManagerEngine();
 
 /**
  * Create API routes
@@ -188,6 +190,23 @@ export function createRoutes(agent: IAgent): Router {
         } catch (error: any) {
             console.error('❌ Notebook Upload Error:', error);
             return res.status(500).json({ error: 'Failed to process and upload source document' });
+        }
+    });
+
+    /**
+     * Admin: Trigger Chat Manager Engine to scan and synthesize failure logs
+     */
+    router.post('/api/manager/scan', async (_req: Request, res: Response) => {
+        try {
+            const report = await chatManagerEngine.scanAndAnalyzeFailures();
+            return res.json({ 
+                success: true,
+                message: "Chat Manager scan completed.",
+                report: report
+            });
+        } catch (error: any) {
+            console.error('❌ Chat Manager Scan Error:', error);
+            return res.status(500).json({ error: 'Failed to complete chat manager scan' });
         }
     });
 
