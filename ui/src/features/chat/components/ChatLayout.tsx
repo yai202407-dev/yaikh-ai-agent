@@ -22,6 +22,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
     const [userName, setUserName] = useState('Yai Data');
     const [showChatFeed, setShowChatFeed] = useState(false);
     const [showNotebook, setShowNotebook] = useState(false);
+    const [showComDeck, setShowComDeck] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -101,7 +102,20 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                             </div>
                             <span className="font-bold text-[17px] tracking-wide text-white/90 mr-6">{userName}</span>
                             
-                            <ComDeck />
+                            <button
+                                onClick={() => setShowComDeck(!showComDeck)}
+                                className={`flex items-center gap-2 px-3 py-1.5 transition-all outline-none rounded-lg border text-sm font-medium shadow-lg focus:outline-none ${
+                                    showComDeck 
+                                        ? 'bg-orange-600/20 border-orange-500/50 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.2)] hover:bg-orange-600/30' 
+                                        : 'bg-[#1C2128] border-white/5 hover:bg-[#22272E] hover:border-white/10 text-white/60 hover:text-white/90'
+                                }`}
+                                title="Toggle Com Deck"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                </svg>
+                                {showComDeck ? 'Com Deck Open' : 'Com Deck'}
+                            </button>
 
                             <button
                                 onClick={() => setShowNotebook(!showNotebook)}
@@ -144,6 +158,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
             </main>
 
             <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} onToolClick={onSidebarToolClick} activeDeckTools={activeDeckTools} />
+            <ComDeck isOpen={showComDeck} onClose={() => setShowComDeck(false)} />
 
             {showChatFeed && (
                 <ChatLogFeedModal onClose={() => setShowChatFeed(false)} />
