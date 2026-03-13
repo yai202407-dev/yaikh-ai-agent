@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChatLogFeedModal } from './ChatLogFeedModal';
 import { NotebookSidebar } from './NotebookSidebar';
+import { ComDeck } from './ComDeck';
 
 interface ChatLayoutProps {
     headerContent?: React.ReactNode;
@@ -98,7 +99,10 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                             <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-[#FF6B2C] to-[#E84E0F] flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(255,107,44,0.3)] border border-[#FF8A5B]/20 pointer-events-none">
                                 <span className="text-[15px] tracking-tight">{userName.substring(0, 3)}</span>
                             </div>
-                            <span className="font-bold text-[17px] tracking-wide text-white/90">{userName}</span>
+                            <span className="font-bold text-[17px] tracking-wide text-white/90 mr-6">{userName}</span>
+                            
+                            <ComDeck />
+
                             <button
                                 onClick={() => setShowNotebook(!showNotebook)}
                                 className={`ml-4 flex items-center gap-2 px-3 py-1.5 transition-all outline-none rounded-lg border text-sm font-medium shadow-lg focus:outline-none ${

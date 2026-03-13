@@ -1,5 +1,5 @@
 import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
-import { ChatVertexAI } from '@langchain/google-vertexai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import type { Firestore } from '@google-cloud/firestore';
 
 interface FailedLog {
@@ -11,7 +11,7 @@ interface FailedLog {
 }
 
 export class ChatManagerEngine {
-    private llm: ChatVertexAI;
+    private llm: ChatGoogleGenerativeAI;
     private _db: Firestore | null = null;
 
     /** Lazy getter — only connects to Firestore when first used */
@@ -23,8 +23,9 @@ export class ChatManagerEngine {
     }
 
     constructor() {
-        this.llm = new ChatVertexAI({
+        this.llm = new ChatGoogleGenerativeAI({
             model: 'gemini-2.5-flash',
+            apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '',
             temperature: 0.2, // Low temp for analytical tasks
         });
     }
@@ -53,18 +54,27 @@ export class ChatManagerEngine {
                 const messages = data.messages;
                 for (let i = messages.length - 1; i >= 0; i--) {
                     const msg = messages[i];
-                    if (msg.role === 'assistant' && msg.content.includes("couldn't process this request properly")) {
-                        // Found a failure. Let's get the user question immediately before it
+                    if (
+                        msg.role === 'assistant' && 
+                        (msg.content.includes("couldn't process this request properly") || 
+                         msg.content.includes("cannot directly access") || 
+                         msg.content.includes("privacy and security protocols") ||
+                         msg.content.includes("not available through my current tools") ||
+                         msg.content.includes("temporary service unavailability") ||
+                         msg.content.includes("unable to retrieve")
+                        )
+                    ) {
+                        // Found a failure or refusal. Let's get the user question immediately before it
                         const userQuestion = i > 0 && messages[i - 1].role === 'user' ? messages[i - 1].content : "Unknown Context";
                         
                         failedSessions.push({
                             sessionId: doc.id,
                             userId: data.userId || 'Unknown',
                             lastMessage: userQuestion,
-                            failureReason: 'Hit maxIterations / Backend Error',
+                            failureReason: 'System Failure or Tool/Policy Refusal / Unavailability',
                             timestamp: data.lastUpdated?.toDate() || new Date()
                         });
-                        break; // Move to next session
+                        // Do not break here; allow it to capture multiple failures per session
                     }
                 }
             });
