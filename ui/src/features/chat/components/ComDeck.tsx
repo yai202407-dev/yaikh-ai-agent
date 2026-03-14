@@ -94,14 +94,13 @@ export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState<string>('One On One');
     const [selectedDept, setSelectedDept] = useState<Department | null>(null);
 
-    if (!isOpen) return null;
-
     const handleDeptClick = (dept: Department) => setSelectedDept(dept);
     const handleBackToDepts = () => setSelectedDept(null);
 
     return (
-        <aside className="absolute right-0 top-0 h-full w-[340px] bg-[#0D1117]/92 backdrop-blur-2xl z-40 flex flex-col border-l border-white/5 shadow-[-20px_0_50px_rgba(0,0,0,0.6)]">
-
+        <aside
+            className={`h-screen bg-[#0D1117] border-l border-white/5 shadow-[-10px_0_30px_rgba(0,0,0,0.4)] z-20 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'w-[340px]' : 'w-0'}`}
+        >
             {/* Top Toolbar Navigation */}
             <div className="flex bg-[#12161B] border-b border-white/5 shrink-0">
                 {[

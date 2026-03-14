@@ -157,6 +157,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                 </footer>
             </main>
 
+            {/* Sidebars sit as flex siblings so they PUSH main content left */}
             <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} onToolClick={onSidebarToolClick} activeDeckTools={activeDeckTools} />
             <ComDeck isOpen={showComDeck} onClose={() => setShowComDeck(false)} />
 
