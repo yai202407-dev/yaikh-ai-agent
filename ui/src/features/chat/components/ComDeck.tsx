@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { DmUser } from '../hooks/useDmChat';
+import { ChannelsBoard } from './ChannelsBoard';
 
 interface ComDeckProps {
     isOpen: boolean;
@@ -96,6 +97,18 @@ const departments: Department[] = [
 export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose, onOpenDm, currentUser: _currentUser }) => {
     const [activeTab, setActiveTab] = useState<string>('One On One');
     const [selectedDept, setSelectedDept] = useState<Department | null>(null);
+    const [isScanning, setIsScanning] = useState(false);
+
+    const handleTriggerScan = async () => {
+        setIsScanning(true);
+        try {
+            await fetch('/api/manager/analyze-topics', { method: 'POST' });
+        } catch (err) {
+            console.error('Scan failed:', err);
+        } finally {
+            setIsScanning(false);
+        }
+    };
 
     // --- Resizable panel logic ---
     const MIN_WIDTH = 200;
@@ -260,8 +273,17 @@ export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose, onOpenDm, cur
                     </div>
                 )}
 
-                {/* PLACEHOLDER for other tabs */}
-                {activeTab !== 'One On One' && (
+                {/* CHANNELS TAB — Phase 3: AI trending topic board */}
+                {activeTab === 'Channels' && (
+                    <ChannelsBoard
+                        currentUser={_currentUser || null}
+                        onTriggerScan={handleTriggerScan}
+                        isScanning={isScanning}
+                    />
+                )}
+
+                {/* Other future tabs */}
+                {activeTab !== 'One On One' && activeTab !== 'Channels' && (
                     <div className="flex flex-col items-center justify-center h-full text-white/20 text-sm p-8 gap-3">
                         <svg className="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <p className="text-center font-medium">{activeTab}<br/><span className="text-[11px] font-normal opacity-70">Coming soon</span></p>

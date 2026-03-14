@@ -394,5 +394,65 @@ export function createRoutes(agent: IAgent): Router {
         }
     });
 
+
+    /**
+     * POST /api/manager/analyze-topics
+     * Triggers the Chat Manager AI to scan DM messages and surface trending topics.
+     */
+    router.post('/api/manager/analyze-topics', async (_req: Request, res: Response) => {
+        try {
+            const topics = await chatManagerEngine.analyzeTopicTrends();
+            return res.json({
+                success: true,
+                message: `Analysis complete. Found ${topics.length} trending topic(s).`,
+                topics,
+            });
+        } catch (error: any) {
+            console.error('❌ Topic analysis error:', error);
+            return res.status(500).json({ success: false, error: 'Topic analysis failed', details: error.message });
+        }
+    });
+
+    /**
+     * GET /api/manager/topics
+     * Returns current active (and recently resolved) trending topics from Firestore.
+     */
+    router.get('/api/manager/topics', async (_req: Request, res: Response) => {
+        try {
+            const db = getFirestoreDb();
+            const snap = await db.collection('trending_topics')
+                .orderBy('heatScore', 'desc')
+                .limit(20)
+                .get();
+
+            const topics = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            return res.json({ success: true, topics });
+        } catch (error: any) {
+            console.error('❌ Fetch topics error:', error);
+            return res.status(500).json({ success: false, error: 'Failed to fetch topics' });
+        }
+    });
+
+    /**
+     * POST /api/manager/topics/:id/respond
+     * Allows management to post an official response, resolving the topic.
+     */
+    router.post('/api/manager/topics/:id/respond', async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { response, respondedBy } = req.body;
+
+            if (!response || !respondedBy) {
+                return res.status(400).json({ success: false, error: 'response and respondedBy are required' });
+            }
+
+            await chatManagerEngine.postOfficialResponse(id, response, respondedBy);
+            return res.json({ success: true, message: 'Official response posted. Topic marked resolved.' });
+        } catch (error: any) {
+            console.error('❌ Post response error:', error);
+            return res.status(500).json({ success: false, error: 'Failed to post response' });
+        }
+    });
+
     return router;
 }
