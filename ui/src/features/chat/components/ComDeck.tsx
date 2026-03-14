@@ -94,13 +94,69 @@ export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState<string>('One On One');
     const [selectedDept, setSelectedDept] = useState<Department | null>(null);
 
+    // --- Resizable panel logic ---
+    const MIN_WIDTH = 200;
+    const MAX_WIDTH = 520;
+    const DEFAULT_WIDTH = 340;
+    const [panelWidth, setPanelWidth] = useState<number>(() => {
+        const saved = localStorage.getItem('comDeckWidth');
+        return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
+    });
+    const isDragging = React.useRef(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        isDragging.current = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+
+        const startX = e.clientX;
+        const startWidth = panelWidth;
+
+        const onMouseMove = (ev: MouseEvent) => {
+            if (!isDragging.current) return;
+            // Dragging LEFT edge: moving left = wider, moving right = narrower
+            const delta = startX - ev.clientX;
+            const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
+            setPanelWidth(newWidth);
+        };
+
+        const onMouseUp = () => {
+            isDragging.current = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            // Persist to localStorage
+            setPanelWidth(prev => {
+                localStorage.setItem('comDeckWidth', String(prev));
+                return prev;
+            });
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    };
+
     const handleDeptClick = (dept: Department) => setSelectedDept(dept);
     const handleBackToDepts = () => setSelectedDept(null);
 
     return (
         <aside
-            className={`h-screen bg-[#0D1117] border-l border-white/5 shadow-[-10px_0_30px_rgba(0,0,0,0.4)] z-20 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'w-[340px]' : 'w-0'}`}
+            style={isOpen ? { width: `${panelWidth}px` } : undefined}
+            className={`h-screen bg-[#0D1117] border-l border-white/5 shadow-[-10px_0_30px_rgba(0,0,0,0.4)] z-20 flex flex-col shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden relative ${isOpen ? '' : 'w-0'}`}
         >
+            {/* ← Drag-resize handle on left edge */}
+            {isOpen && (
+                <div
+                    onMouseDown={handleMouseDown}
+                    className="absolute left-0 top-0 h-full w-[5px] z-50 cursor-col-resize group flex items-center justify-center"
+                    title="Drag to resize"
+                >
+                    {/* Visual grip indicator */}
+                    <div className="w-[3px] h-16 rounded-full bg-white/10 group-hover:bg-[#FF6B2C]/60 transition-colors" />
+                </div>
+            )}
             {/* Top Toolbar Navigation */}
             <div className="flex bg-[#12161B] border-b border-white/5 shrink-0">
                 {[
