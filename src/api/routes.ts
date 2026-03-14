@@ -32,6 +32,52 @@ export function createRoutes(agent: IAgent): Router {
         });
     });
 
+    // ── Phase 6: Auth — Laravel Token Verification ────────────────────────────
+
+    /**
+     * POST /api/auth/verify-token
+     * Called by the frontend on startup when ?lt=TOKEN is found in the URL.
+     * Validates the Laravel Bearer token and returns standardised user data.
+     *
+     * Body: { token: string }
+     */
+    router.post('/api/auth/verify-token', async (req: Request, res: Response) => {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ success: false, error: 'token required' });
+
+        const laravelBase = process.env.LARAVEL_API_URL || 'https://virot.yaikh.com/api';
+
+        try {
+            const response = await axios.get(`${laravelBase}/user`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json',
+                },
+                timeout: 8000,
+            });
+
+            const u = response.data;
+
+            // Map Laravel user fields → DmUser shape
+            const user = {
+                id: String(u.id),
+                name: u.name || u.full_name || u.username || 'Unknown',
+                department: u.department || u.dept || u.department_name || '',
+                role: u.role || u.position || '',
+                avatar: u.avatar || u.profile_photo_url || null,
+            };
+
+            return res.json({ success: true, user });
+        } catch (err: any) {
+            const status = err?.response?.status;
+            if (status === 401 || status === 403) {
+                return res.status(401).json({ success: false, error: 'Token invalid or expired' });
+            }
+            console.error('❌ [Auth] Laravel verify failed:', err.message);
+            return res.status(502).json({ success: false, error: 'Could not reach auth server' });
+        }
+    });
+
     // Legacy root redirect (express.static now serves index.html here)
     router.get('/', (_req: Request, res: Response) => {
         res.json({

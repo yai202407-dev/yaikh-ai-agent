@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import type { DmUser } from '../hooks/useDmChat';
 import { ChannelsBoard } from './ChannelsBoard';
+import { usePresenceFeed } from '../hooks/usePresenceFeed';
+import { StatusDot } from './StatusDot';
 
 interface ComDeckProps {
     isOpen: boolean;
@@ -98,6 +100,9 @@ export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose, onOpenDm, cur
     const [activeTab, setActiveTab] = useState<string>('One On One');
     const [selectedDept, setSelectedDept] = useState<Department | null>(null);
     const [isScanning, setIsScanning] = useState(false);
+
+    // Phase 6: Real-time presence feed
+    const presenceMap = usePresenceFeed();
 
     const handleTriggerScan = async () => {
         setIsScanning(true);
@@ -243,25 +248,44 @@ export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose, onOpenDm, cur
                                 const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                                 const colors = ['#FF6B2C', '#E84E0F', '#C73E0C', '#A32D09', '#7F1D09'];
                                 const bg = colors[user.id % colors.length];
+
+                                // Look up real-time presence by user id
+                                const userId = `${selectedDept.id}_user_${user.id}`;
+                                const status = presenceMap.get(userId) || null;
+                                const isDnd = status === 'dnd';
+
                                 return (
                                     <button
                                         key={user.id}
-                                        className="flex flex-col items-center gap-2 group focus:outline-none"
+                                        className={`flex flex-col items-center gap-2 group focus:outline-none transition-opacity ${isDnd ? 'opacity-40' : 'opacity-100'}`}
                                         onClick={() => {
+                                            if (isDnd) return; // can't initiate with DND
                                             if (onOpenDm) {
                                                 onOpenDm({
-                                                    id: `${selectedDept.id}_user_${user.id}`,
+                                                    id: userId,
                                                     name: user.name,
                                                     department: selectedDept.name,
                                                 });
                                             }
                                         }}
+                                        title={isDnd ? `${user.name} — Do Not Disturb` : user.name}
                                     >
-                                        <div
-                                            className="w-[64px] h-[64px] rounded-full flex items-center justify-center font-bold text-[18px] text-white border-2 border-transparent group-hover:border-[#FF6B2C] transition-all shadow-lg group-hover:shadow-[0_0_20px_rgba(255,107,44,0.35)]"
-                                            style={{ background: `linear-gradient(135deg, ${bg}44, #1C2128)` }}
-                                        >
-                                            {initials}
+                                        {/* Avatar with presence dot */}
+                                        <div className="relative">
+                                            <div
+                                                className={`w-[64px] h-[64px] rounded-full flex items-center justify-center font-bold text-[18px] text-white border-2 transition-all shadow-lg ${
+                                                    isDnd
+                                                        ? 'border-transparent cursor-not-allowed'
+                                                        : 'border-transparent group-hover:border-[#FF6B2C] group-hover:shadow-[0_0_20px_rgba(255,107,44,0.35)]'
+                                                }`}
+                                                style={{ background: `linear-gradient(135deg, ${bg}44, #1C2128)` }}
+                                            >
+                                                {initials}
+                                            </div>
+                                            {/* Status dot — bottom right of avatar */}
+                                            <div className="absolute -bottom-0.5 -right-0.5">
+                                                <StatusDot status={status} size="md" />
+                                            </div>
                                         </div>
                                         <span className="text-[11px] font-medium text-white/70 text-center group-hover:text-white leading-tight transition-colors px-1">
                                             {user.name}

@@ -4,6 +4,7 @@ import { NotebookSidebar } from './NotebookSidebar';
 import { ComDeck } from './ComDeck';
 import type { DmUser } from '../hooks/useDmChat';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { usePresence } from '../hooks/usePresence';
 
 interface ChatLayoutProps {
     headerContent?: React.ReactNode;
@@ -13,7 +14,6 @@ interface ChatLayoutProps {
     activeDeckTools?: string[];
     onOpenDm?: (recipient: DmUser) => void;
     currentUser?: DmUser;
-    onOpenIdentitySelector?: () => void;
 }
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({
@@ -24,7 +24,6 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
     activeDeckTools,
     onOpenDm,
     currentUser,
-    onOpenIdentitySelector,
 }) => {
 
     // Use the currentUser prop for display name — falls back to 'Yai Data'
@@ -37,6 +36,9 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
 
     // Phase 5: Push notifications
     const { permission: pushPermission, isSubscribed, isLoading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications(currentUser || null);
+
+    // Phase 6: Own presence management
+    const { toggleDnd, currentStatus } = usePresence(currentUser || null);
 
     return (
         <div className="flex h-screen w-full bg-[#010409] text-white relative font-sans min-w-[320px]">
@@ -81,20 +83,41 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                             Back
                         </button>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <button
-                                onClick={onOpenIdentitySelector}
-                                className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-[#FF6B2C] to-[#E84E0F] flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(255,107,44,0.3)] border border-[#FF8A5B]/20 shrink-0 hover:shadow-[0_0_28px_rgba(255,107,44,0.5)] transition-all"
-                                title="Change identity"
-                            >
-                                <span className="text-[13px] tracking-tight">{displayInitials}</span>
-                            </button>
-                            <button
-                                onClick={onOpenIdentitySelector}
-                                className="font-bold text-[15px] tracking-wide text-white/90 hover:text-[#FF6B2C] transition-colors"
-                                title="Change identity"
-                            >
-                                {displayName}
-                            </button>
+                            {/* Avatar with own status dot */}
+                            <div className="relative shrink-0">
+                                <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-[#FF6B2C] to-[#E84E0F] flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(255,107,44,0.3)] border border-[#FF8A5B]/20">
+                                    <span className="text-[13px] tracking-tight">{displayInitials}</span>
+                                </div>
+                                {/* Status dot — clickable to toggle DND */}
+                                <button
+                                    onClick={toggleDnd}
+                                    title={`Status: ${currentStatus} — click to toggle Do Not Disturb`}
+                                    className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#010409] hover:scale-125 transition-transform"
+                                    style={{
+                                        backgroundColor:
+                                            currentStatus === 'active' ? '#22C55E' :
+                                            currentStatus === 'busy'   ? '#F59E0B' :
+                                            currentStatus === 'dnd'    ? '#EF4444' :
+                                                                          '#9CA3AF',
+                                    }}
+                                />
+                            </div>
+
+                            {/* Display name + own status label */}
+                            <div className="flex flex-col leading-none">
+                                <span className="font-bold text-[15px] tracking-wide text-white/90">{displayName}</span>
+                                <span className="text-[10px] capitalize mt-0.5" style={{
+                                    color: currentStatus === 'active' ? '#22C55E' :
+                                           currentStatus === 'busy'   ? '#F59E0B' :
+                                           currentStatus === 'dnd'    ? '#EF4444' :
+                                                                         '#6B7280',
+                                }}>
+                                    {currentStatus === 'idle'   ? '● Online' :
+                                     currentStatus === 'busy'   ? '● Busy' :
+                                     currentStatus === 'active' ? '● Active' :
+                                                                  '● Do Not Disturb'}
+                                </span>
+                            </div>
 
                             {/* 🔔 Phase 5: Notification bell */}
                             {pushPermission !== 'unsupported' && (

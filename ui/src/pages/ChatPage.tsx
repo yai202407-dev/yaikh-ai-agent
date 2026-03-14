@@ -6,38 +6,129 @@ import { ChatInput } from '../features/chat/components/ChatInput';
 import { AgentSettingsModal } from '../features/agent-config/components/AgentSettingsModal';
 import { useAgentConfig } from '../features/agent-config/hooks/useAgentConfig';
 import { DmChatView } from '../features/chat/components/DmChatView';
-import { IdentitySelector, loadStoredIdentity } from '../features/chat/components/IdentitySelector';
 import type { DmUser } from '../features/chat/hooks/useDmChat';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'yai_current_user';
+
+function loadStoredUser(): DmUser | null {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+
+function saveUser(user: DmUser) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+}
+
+/**
+ * On startup, check if the URL contains ?lt=<laravel_token>
+ * If so, verify it against the backend and return the user.
+ * Strip the ?lt= param from the URL immediately (security).
+ */
+async function verifyLaravelToken(token: string): Promise<DmUser | null> {
+    try {
+        const res = await fetch('/api/auth/verify-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+        });
+        const data = await res.json();
+        if (data.success && data.user) return data.user;
+    } catch (err) {
+        console.error('[Auth] Token verification failed:', err);
+    }
+    return null;
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export const ChatPage: React.FC = () => {
     const { messages, isLoading, sendMessage, activeDeckTools } = useChat();
     const { config, availableModels, updateConfig } = useAgentConfig();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // ── Real user identity (Phase 2) ────────────────────────────────────────
-    const [currentUser, setCurrentUser] = useState<DmUser | null>(() => loadStoredIdentity());
-    const [showIdentitySelector, setShowIdentitySelector] = useState<boolean>(() => !loadStoredIdentity());
+    // ── Identity: from Laravel token OR cached localStorage ──────────────────
+    const [currentUser, setCurrentUser] = useState<DmUser | null>(null);
+    const [authState, setAuthState] = useState<'loading' | 'ready' | 'unauthenticated'>('loading');
+
+    useEffect(() => {
+        (async () => {
+            // 1. Check URL for ?lt= Laravel token
+            const params = new URLSearchParams(window.location.search);
+            const laravelToken = params.get('lt');
+
+            if (laravelToken) {
+                // Strip token from URL immediately – don't expose it in browser history
+                params.delete('lt');
+                const newUrl = params.toString()
+                    ? `${window.location.pathname}?${params.toString()}`
+                    : window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+
+                // Verify with backend
+                const user = await verifyLaravelToken(laravelToken);
+                if (user) {
+                    saveUser(user);
+                    setCurrentUser(user);
+                    setAuthState('ready');
+                    return;
+                }
+            }
+
+            // 2. Try cached user from previous session
+            const cached = loadStoredUser();
+            if (cached) {
+                setCurrentUser(cached);
+                setAuthState('ready');
+                return;
+            }
+
+            // 3. No auth at all
+            setAuthState('unauthenticated');
+        })();
+    }, []);
 
     // ── DM State ─────────────────────────────────────────────────────────────
     const [dmRecipient, setDmRecipient] = useState<DmUser | null>(null);
     const handleOpenDm = (recipient: DmUser) => setDmRecipient(recipient);
     const handleCloseDm = () => setDmRecipient(null);
 
-    // If for some reason identity is cleared, re-prompt
-    useEffect(() => {
-        if (!currentUser) setShowIdentitySelector(true);
-    }, [currentUser]);
+    // ── Loading screen ───────────────────────────────────────────────────────
+    if (authState === 'loading') {
+        return (
+            <div className="flex h-screen w-full bg-[#010409] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-2 border-[#FF6B2C]/30 border-t-[#FF6B2C] rounded-full animate-spin" />
+                    <p className="text-white/30 text-sm">Verifying session...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Unauthenticated screen ───────────────────────────────────────────────
+    if (authState === 'unauthenticated') {
+        return (
+            <div className="flex h-screen w-full bg-[#010409] items-center justify-center">
+                <div className="flex flex-col items-center gap-4 text-center px-8">
+                    <div className="w-14 h-14 rounded-full bg-[#FF6B2C]/10 border border-[#FF6B2C]/20 flex items-center justify-center">
+                        <svg className="w-7 h-7 text-[#FF6B2C]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p className="text-white/60 font-semibold">Session not found</p>
+                        <p className="text-white/25 text-sm mt-1">Please open the chat from the Yaikh company portal.</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
-            {/* Identity selector — appears on first visit or when user clicks their name */}
-            <IdentitySelector
-                isOpen={showIdentitySelector}
-                onClose={() => { if (currentUser) setShowIdentitySelector(false); }}
-                onSelect={(user) => { setCurrentUser(user); setShowIdentitySelector(false); }}
-                currentUser={currentUser}
-            />
-
             <ChatLayout
                 headerContent={
                     <div className="fixed left-1/2 -translate-x-1/2 top-10 flex flex-col items-center pointer-events-none z-50">
@@ -62,8 +153,7 @@ export const ChatPage: React.FC = () => {
                 }}
                 activeDeckTools={activeDeckTools}
                 onOpenDm={handleOpenDm}
-                currentUser={currentUser || { id: 'guest', name: 'Guest', department: 'General' }}
-                onOpenIdentitySelector={() => setShowIdentitySelector(true)}
+                currentUser={currentUser || { id: 'unknown', name: 'Unknown', department: '' }}
             >
                 {dmRecipient && currentUser ? (
                     <DmChatView
@@ -86,5 +176,3 @@ export const ChatPage: React.FC = () => {
         </>
     );
 };
-
-
