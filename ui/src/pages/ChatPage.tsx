@@ -5,17 +5,36 @@ import { MessageList } from '../features/chat/components/MessageList';
 import { ChatInput } from '../features/chat/components/ChatInput';
 import { AgentSettingsModal } from '../features/agent-config/components/AgentSettingsModal';
 import { useAgentConfig } from '../features/agent-config/hooks/useAgentConfig';
+import { DmChatView } from '../features/chat/components/DmChatView';
+import type { DmUser } from '../features/chat/hooks/useDmChat';
+
+// ── Current user identity (guest until real auth is wired) ──────────────────
+// We derive a stable guest ID from the browser. Phase 2 will replace this
+// with the real MongoDB user session.
+const getGuestUser = (): DmUser => {
+    let guestId = localStorage.getItem('yai_guest_id');
+    if (!guestId) {
+        guestId = `guest_${Math.random().toString(36).substring(2, 10)}`;
+        localStorage.setItem('yai_guest_id', guestId);
+    }
+    return {
+        id: guestId,
+        name: localStorage.getItem('yai_guest_name') || 'Yai Data',
+        department: 'General',
+    };
+};
 
 export const ChatPage: React.FC = () => {
-    const {
-        messages,
-        isLoading,
-        sendMessage,
-        activeDeckTools,
-    } = useChat();
-
+    const { messages, isLoading, sendMessage, activeDeckTools } = useChat();
     const { config, availableModels, updateConfig } = useAgentConfig();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // ── DM State ────────────────────────────────────────────────────────────
+    const [dmRecipient, setDmRecipient] = useState<DmUser | null>(null);
+    const currentUser = getGuestUser();
+
+    const handleOpenDm = (recipient: DmUser) => setDmRecipient(recipient);
+    const handleCloseDm = () => setDmRecipient(null);
 
     return (
         <>
@@ -30,20 +49,32 @@ export const ChatPage: React.FC = () => {
                     </div>
                 }
                 inputContent={
-                    <ChatInput
-                        onSendMessage={async (msg) => {
-                            await sendMessage(msg);
-                        }}
-                        isLoading={isLoading}
-                    />
+                    // Hide AI input when in DM mode — DmChatView has its own input
+                    dmRecipient ? null : (
+                        <ChatInput
+                            onSendMessage={async (msg) => { await sendMessage(msg); }}
+                            isLoading={isLoading}
+                        />
+                    )
                 }
                 onSidebarToolClick={async (toolName) => {
                     const promptText = `Generate a ${toolName} based on the ongoing context in my workspace.`;
                     await sendMessage(promptText);
                 }}
                 activeDeckTools={activeDeckTools}
-                >
-                <MessageList messages={messages} isLoading={isLoading} />
+                onOpenDm={handleOpenDm}
+                currentUser={currentUser}
+            >
+                {/* Switch center content: AI chat ↔ 1-on-1 DM */}
+                {dmRecipient ? (
+                    <DmChatView
+                        currentUser={currentUser}
+                        recipient={dmRecipient}
+                        onClose={handleCloseDm}
+                    />
+                ) : (
+                    <MessageList messages={messages} isLoading={isLoading} />
+                )}
             </ChatLayout>
 
             <AgentSettingsModal
@@ -56,3 +87,5 @@ export const ChatPage: React.FC = () => {
         </>
     );
 };
+
+

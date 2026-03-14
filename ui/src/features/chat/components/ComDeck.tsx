@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import type { DmUser } from '../hooks/useDmChat';
 
 interface ComDeckProps {
     isOpen: boolean;
     onClose: () => void;
+    onOpenDm?: (recipient: DmUser) => void;
+    currentUser?: DmUser;
 }
 
 interface Department {
@@ -90,7 +93,7 @@ const departments: Department[] = [
     },
 ];
 
-export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose }) => {
+export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose, onOpenDm, currentUser: _currentUser }) => {
     const [activeTab, setActiveTab] = useState<string>('One On One');
     const [selectedDept, setSelectedDept] = useState<Department | null>(null);
 
@@ -228,7 +231,19 @@ export const ComDeck: React.FC<ComDeckProps> = ({ isOpen, onClose }) => {
                                 const colors = ['#FF6B2C', '#E84E0F', '#C73E0C', '#A32D09', '#7F1D09'];
                                 const bg = colors[user.id % colors.length];
                                 return (
-                                    <button key={user.id} className="flex flex-col items-center gap-2 group focus:outline-none">
+                                    <button
+                                        key={user.id}
+                                        className="flex flex-col items-center gap-2 group focus:outline-none"
+                                        onClick={() => {
+                                            if (onOpenDm) {
+                                                onOpenDm({
+                                                    id: `${selectedDept.id}_user_${user.id}`,
+                                                    name: user.name,
+                                                    department: selectedDept.name,
+                                                });
+                                            }
+                                        }}
+                                    >
                                         <div
                                             className="w-[64px] h-[64px] rounded-full flex items-center justify-center font-bold text-[18px] text-white border-2 border-transparent group-hover:border-[#FF6B2C] transition-all shadow-lg group-hover:shadow-[0_0_20px_rgba(255,107,44,0.35)]"
                                             style={{ background: `linear-gradient(135deg, ${bg}44, #1C2128)` }}

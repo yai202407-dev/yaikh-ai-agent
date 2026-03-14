@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChatLogFeedModal } from './ChatLogFeedModal';
 import { NotebookSidebar } from './NotebookSidebar';
 import { ComDeck } from './ComDeck';
+import type { DmUser } from '../hooks/useDmChat';
 
 interface ChatLayoutProps {
     headerContent?: React.ReactNode;
@@ -9,6 +10,8 @@ interface ChatLayoutProps {
     inputContent: React.ReactNode;
     onSidebarToolClick?: (toolName: string) => void;
     activeDeckTools?: string[];
+    onOpenDm?: (recipient: DmUser) => void;
+    currentUser?: DmUser;
 }
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({
@@ -16,7 +19,9 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
     children,
     inputContent,
     onSidebarToolClick,
-    activeDeckTools
+    activeDeckTools,
+    onOpenDm,
+    currentUser,
 }) => {
 
     const [userName, setUserName] = useState('Yai Data');
@@ -159,7 +164,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
 
             {/* Sidebars sit as flex siblings so they PUSH main content left */}
             <NotebookSidebar isOpen={showNotebook} onClose={() => setShowNotebook(false)} onToolClick={onSidebarToolClick} activeDeckTools={activeDeckTools} />
-            <ComDeck isOpen={showComDeck} onClose={() => setShowComDeck(false)} />
+            <ComDeck isOpen={showComDeck} onClose={() => setShowComDeck(false)} onOpenDm={onOpenDm} currentUser={currentUser} />
 
             {showChatFeed && (
                 <ChatLogFeedModal onClose={() => setShowChatFeed(false)} />
