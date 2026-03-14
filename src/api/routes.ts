@@ -4,6 +4,7 @@ import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
 import multer from 'multer';
 import { NotebookService } from '../skills/notebook/NotebookService.js';
 import { ChatManagerEngine } from '../manager/ChatManagerEngine.js';
+import { pushService } from '../infrastructure/push/PushNotificationService.js';
 import axios from 'axios';
 
 // Use memory storage for ephemeral processing before pushing to GCP Bucket
@@ -509,6 +510,54 @@ export function createRoutes(agent: IAgent): Router {
         } catch (error: any) {
             console.error('❌ Post response error:', error);
             return res.status(500).json({ success: false, error: 'Failed to post response' });
+        }
+    });
+
+    // ── Phase 5: Web Push Notification Routes ────────────────────────────────
+
+    /**
+     * GET /api/push/vapid-public-key
+     * Returns the VAPID public key needed by the browser to create a subscription.
+     */
+    router.get('/api/push/vapid-public-key', (_req: Request, res: Response) => {
+        const key = process.env.VAPID_PUBLIC_KEY || '';
+        if (!key) return res.status(503).json({ success: false, error: 'Push not configured' });
+        return res.json({ success: true, publicKey: key });
+    });
+
+    /**
+     * POST /api/push/subscribe
+     * Registers a browser push subscription for a user.
+     * Body: { userId, userName, subscription: PushSubscription }
+     */
+    router.post('/api/push/subscribe', async (req: Request, res: Response) => {
+        try {
+            const { userId, userName, subscription } = req.body;
+            if (!userId || !subscription) {
+                return res.status(400).json({ success: false, error: 'userId and subscription required' });
+            }
+            await pushService.subscribe(userId, userName || 'Unknown', subscription);
+            return res.json({ success: true, message: 'Subscribed to push notifications' });
+        } catch (error: any) {
+            console.error('❌ Push subscribe error:', error);
+            return res.status(500).json({ success: false, error: 'Failed to subscribe' });
+        }
+    });
+
+    /**
+     * DELETE /api/push/unsubscribe
+     * Removes a push subscription for a user.
+     * Body: { userId }
+     */
+    router.delete('/api/push/unsubscribe', async (req: Request, res: Response) => {
+        try {
+            const { userId } = req.body;
+            if (!userId) return res.status(400).json({ success: false, error: 'userId required' });
+            await pushService.unsubscribe(userId);
+            return res.json({ success: true, message: 'Unsubscribed from push notifications' });
+        } catch (error: any) {
+            console.error('❌ Push unsubscribe error:', error);
+            return res.status(500).json({ success: false, error: 'Failed to unsubscribe' });
         }
     });
 

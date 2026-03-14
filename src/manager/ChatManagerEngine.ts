@@ -1,6 +1,7 @@
 import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import type { Firestore } from '@google-cloud/firestore';
+import { pushService } from '../infrastructure/push/PushNotificationService.js';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -196,6 +197,15 @@ JSON:`;
                 } else {
                     const docRef = await this.db.collection('trending_topics').add(topic);
                     topic.id = docRef.id;
+
+                    // 🔔 Phase 5: Push alert if this is a NEW critical topic
+                    if (topic.urgency === 'critical') {
+                        pushService.notifyCriticalTopic(
+                            topic.topic,
+                            topic.summary,
+                            topic.suggestedResponder
+                        ).catch(err => console.error('[Push] Critical alert failed:', err));
+                    }
                 }
 
                 topics.push(topic);
@@ -216,6 +226,11 @@ JSON:`;
      */
     async postOfficialResponse(topicId: string, responseText: string, respondedBy: string): Promise<void> {
         const docRef = this.db.collection('trending_topics').doc(topicId);
+
+        // Fetch topic title before updating so we can include it in the push
+        const snap = await docRef.get();
+        const topicTitle = snap.exists ? (snap.data()?.topic || 'Topic') : 'Topic';
+
         await docRef.update({
             status: 'resolved',
             officialResponse: responseText,
@@ -223,7 +238,12 @@ JSON:`;
             respondedAt: new Date(),
             updatedAt: new Date(),
         });
+
         console.log(`✅ [Chat Manager] Topic ${topicId} resolved by ${respondedBy}`);
+
+        // 🔔 Phase 5: Push resolution notification to all employees
+        pushService.notifyTopicResolved(topicTitle, responseText, respondedBy)
+            .catch(err => console.error('[Push] Resolution notification failed:', err));
     }
 
     // ── Phase 1: Failure Analysis (original) ──────────────────────────────────
