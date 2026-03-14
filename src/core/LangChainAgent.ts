@@ -26,7 +26,7 @@ export class LangChainAgent implements IAgent {
     ) { }
 
     /**
-     * Initialize the LangChain LLM with tools
+     * Initialize the LangChain LLM
      */
     async initialize() {
         if (this.provider === 'gemini') {
@@ -45,27 +45,32 @@ export class LangChainAgent implements IAgent {
             });
         }
 
-        // Convert our tools to LangChain format
-        this.tools = this.toolRegistry.getAllTools().map(tool => {
+        // Tools will be bound per-request in process/stream to include context
+    }
+
+    /**
+     * Helper to prepare tools with request context
+     * Passes memoryStore so delegation tools (like AgentTwoTool) can fetch conversation
+     * history and enrich forwarded messages with prior context.
+     */
+    private getPreparedTools(userId: string, conversationId: string, systemToken: string = 'None Provided'): DynamicStructuredTool[] {
+        return this.toolRegistry.getAllTools().map(tool => {
             const definition = tool.getDefinition();
             return new DynamicStructuredTool({
                 name: tool.name,
                 description: tool.description,
                 schema: this.mapParametersToZod(definition.function.parameters),
                 func: async (args: any) => {
-                    return await tool.execute(args);
+                    return await tool.execute(args, { userId, conversationId, systemToken, memoryStore: this.memory });
                 },
             });
         });
-
-        // Bind tools to the LLM
-        this.llm = this.llm.bindTools(this.tools);
     }
 
     /**
      * Process user message
      */
-    async process(userId: string, message: string): Promise<AgentResponse> {
+    async process(userId: string, message: string, conversationId?: string): Promise<AgentResponse> {
         if (this.activeRequests.has(userId)) {
             return {
                 response: "⚠️ I am still processing your previous request. Please wait a moment.",
@@ -85,7 +90,21 @@ export class LangChainAgent implements IAgent {
                 await this.initialize();
             }
 
-            const history = await this.memory.getConversationHistory(userId);
+            // Ensure we have a persistent session ID for this entire turn
+            const activeSessionId = conversationId || this.memory.generateSessionId(userId);
+
+            const systemToken = (message as any).__systemToken || 'None Provided';
+            const history = await this.memory.getConversationHistory(userId, activeSessionId, systemToken);
+            const isNewConversation = history.length === 0;
+
+            // Save human message immediately — must be a primitive string, not a String object
+            const rawUserMessage = typeof message === 'string' ? message : String(message);
+            await this.memory.saveMessage(userId, 'user', rawUserMessage, activeSessionId, systemToken);
+
+            if (isNewConversation) {
+                // Generate a brief title asynchronously so it doesn't block the chat flow
+                this.generateConversationTitle(rawUserMessage, activeSessionId).catch(e => console.error(e));
+            }
 
             // Build message history
             const currentDateTime = new Date().toLocaleString('en-GB', {
@@ -95,10 +114,9 @@ export class LangChainAgent implements IAgent {
 
             // Fetch dynamic prompt if it's a function
             const resolvedPrompt = typeof this.systemPrompt === 'function' ? await this.systemPrompt() : this.systemPrompt;
-            const systemToken = (message as any).__systemToken || 'None Provided';
 
             const messages: any[] = [
-                new SystemMessage(`Current Date & Time: ${currentDateTime}\nSystem Token: ${systemToken}\n\n${resolvedPrompt}`)
+                new SystemMessage(`Current Date & Time: ${currentDateTime}\nUser ID: ${userId}\nSystem Token: ${systemToken}\n\n${resolvedPrompt}`)
             ];
 
             // Add conversation history
@@ -114,10 +132,14 @@ export class LangChainAgent implements IAgent {
             const rawMessage = typeof message === 'string' ? message : String(message);
             messages.push(new HumanMessage(rawMessage));
 
+            // Prepare and bind tools for this request
+            const tools = this.getPreparedTools(userId, activeSessionId, systemToken);
+            const llmWithTools = this.llm!.bindTools(tools);
+
             // Invoke LLM and handle tool calls
             console.log(`🧠 [LangChain] Initial LLM call starting...`);
             const startTime = Date.now();
-            let response = await this.llm!.invoke(messages);
+            let response = await llmWithTools.invoke(messages);
 
             let totalUsage: TokenUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
             totalUsage = this.accumulateUsage(response, totalUsage);
@@ -176,7 +198,7 @@ export class LangChainAgent implements IAgent {
                     console.log(`  ↳ Tool ${cleanToolName} starting...`);
                     const toolStartTime = Date.now();
 
-                    const tool = this.tools.find(t => t.name === cleanToolName);
+                    const tool = tools.find(t => t.name === cleanToolName);
                     if (tool) {
                         try {
                             const result = await tool.invoke(toolCall.args);
@@ -204,7 +226,7 @@ export class LangChainAgent implements IAgent {
                 // Get next response
                 console.log(`🧠 [LangChain] Asking LLM for follow-up...`);
                 const followUpStartTime = Date.now();
-                response = await this.llm!.invoke(messages);
+                response = await llmWithTools.invoke(messages);
                 totalUsage = this.accumulateUsage(response, totalUsage);
                 console.log(`⏱️  Follow-up LLM call took ${((Date.now() - followUpStartTime) / 1000).toFixed(1)}s`);
             }
@@ -235,9 +257,8 @@ export class LangChainAgent implements IAgent {
                 cleanResponse = "I'm sorry, I couldn't process this request properly. The answer may be too large, or I lack the proper information. Please try rephrasing or narrowing down your search.";
             }
 
-            // Save to memory
-            await this.memory.saveMessage(userId, 'user', message);
-            await this.memory.saveMessage(userId, 'assistant', responseText);
+            // Save assistant response to memory — save the CLEAN response (no YAI2TOOLS tags)
+            await this.memory.saveMessage(userId, 'assistant', cleanResponse, activeSessionId, systemToken);
 
             console.log(`🚀 Sending response back to API...`);
             return {
@@ -247,7 +268,8 @@ export class LangChainAgent implements IAgent {
                 usedTools: iterations > 0,
                 usage: totalUsage,
                 suggestions,
-                chartData
+                chartData,
+                conversationId: activeSessionId
             };
         } catch (error: any) {
             console.error('💥 Critical Agent Error:', error);
@@ -271,7 +293,7 @@ export class LangChainAgent implements IAgent {
     /**
      * Stream user message with real-time feedback
      */
-    async stream(userId: string, message: string, onChunk: (chunk: string) => void): Promise<AgentResponse> {
+    async stream(userId: string, message: string, onChunk: (chunk: string) => void, conversationId?: string): Promise<AgentResponse> {
         if (this.activeRequests.has(userId)) {
             const warning = "⚠️ I am still processing your previous request. Please wait a moment for me to finish.";
             onChunk(warning);
@@ -286,20 +308,33 @@ export class LangChainAgent implements IAgent {
                 await this.initialize();
             }
 
-            const history = await this.memory.getConversationHistory(userId);
+            const activeSessionId = conversationId || this.memory.generateSessionId(userId);
+
+            const systemToken = (message as any).__systemToken || 'None Provided';
+            const history = await this.memory.getConversationHistory(userId, activeSessionId, systemToken);
+            const isNewConversation = history.length === 0;
+            
+            // Cast message to primitive string
+            const rawMessage = typeof message === 'string' ? message : String(message);
+
+            // Save human message immediately to ensure it's persisted — primitive string only
+            await this.memory.saveMessage(userId, 'user', rawMessage, activeSessionId, systemToken);
+
+            if (isNewConversation) {
+                // Generate a brief title asynchronously
+                this.generateConversationTitle(rawMessage, activeSessionId).catch(e => console.error(e));
+            }
+
             const currentDateTime = new Date().toLocaleString('en-GB', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
             const resolvedPrompt = typeof this.systemPrompt === 'function' ? await this.systemPrompt() : this.systemPrompt;
-            const systemToken = (message as any).__systemToken || 'None Provided';
-            const messages: any[] = [new SystemMessage(`Current Date & Time: ${currentDateTime}\nSystem Token: ${systemToken}\n\n${resolvedPrompt}`)];
+            const messages: any[] = [new SystemMessage(`Current Date & Time: ${currentDateTime}\nUser ID: ${userId}\nSystem Token: ${systemToken}\n\n${resolvedPrompt}`)];
 
             for (const msg of history) {
                 messages.push(msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content));
             }
-            // Cast message to primitive string
-            const rawMessage = typeof message === 'string' ? message : String(message);
             messages.push(new HumanMessage(rawMessage));
 
             let iterations = 0;
@@ -318,7 +353,11 @@ export class LangChainAgent implements IAgent {
                     let toolCalls: any[] = [];
                     let gatheredContent = "";
 
-                    const stream = await this.llm!.stream(currentMessages);
+                    // Prepare and bind tools for this stream turn
+                    const tools = this.getPreparedTools(userId, activeSessionId, systemToken);
+                    const llmWithTools = this.llm!.bindTools(tools);
+
+                    const stream = await llmWithTools.stream(currentMessages);
 
                     for await (const chunk of stream) {
                         // Accumulate usage metadata
@@ -377,7 +416,7 @@ export class LangChainAgent implements IAgent {
 
                         for (const toolCall of toolCalls) {
                             const cleanToolName = toolCall.name.split('<')[0].trim();
-                            const tool = this.tools.find(t => t.name === cleanToolName);
+                            const tool = tools.find(t => t.name === cleanToolName);
 
                             if (tool) {
                                 try {
@@ -398,32 +437,32 @@ export class LangChainAgent implements IAgent {
 
                 // Start the stream process
                 await runStream(messages);
-
             } catch (error) {
                 console.error('Streaming error:', error);
                 onChunk(`\nError: I encountered a problem while generating the response.`);
                 finalResponse = `I encountered a problem while generating the response.`;
             }
 
-            let { cleanResponse, suggestions } = this.parseSuggestions(finalResponse);
-            const { cleanText, chartData } = this.parseChartData(cleanResponse);
+            let { cleanResponse, suggestions: parsedSuggestions } = this.parseSuggestions(finalResponse);
+            const { cleanText, chartData: parsedChartData } = this.parseChartData(cleanResponse);
             
             let finalOutput = cleanText || cleanResponse;
             if (!finalOutput || finalOutput.trim() === '') {
                 finalOutput = "I'm sorry, I couldn't process this request properly. The answer may be too large, or I lack the proper information. Please try rephrasing or narrowing down your search.";
             }
 
-            // Save to memory
-            await this.memory.saveMessage(userId, 'user', message);
-            await this.memory.saveMessage(userId, 'assistant', finalOutput);
+            // Save final assistant response to memory — save CLEAN response (no YAI2TOOLS tags)
+            const { cleanResponse: streamCleanResp } = this.parseSuggestions(finalOutput);
+            await this.memory.saveMessage(userId, 'assistant', streamCleanResp || finalOutput, activeSessionId, systemToken);
 
             return {
                 response: finalOutput,
                 domain: 'general',
                 usedTools,
                 usage: totalUsage,
-                suggestions,
-                chartData
+                suggestions: parsedSuggestions,
+                chartData: parsedChartData,
+                conversationId: activeSessionId
             };
         } finally {
             this.activeRequests.delete(userId);
@@ -431,11 +470,26 @@ export class LangChainAgent implements IAgent {
         }
     }
 
-    /**
-     * Clear conversation history
-     */
-    async clearHistory(userId: string): Promise<void> {
-        await this.memory.clearConversationHistory(userId);
+    async clearHistory(userId: string, systemToken?: string): Promise<void> {
+        await this.memory.clearConversationHistory(userId, undefined, systemToken);
+    }
+
+    async getConversations(userId: string, systemToken?: string): Promise<any[]> {
+        return await this.memory.getConversations(userId, systemToken);
+    }
+
+    async getHistory(sessionId: string, systemToken?: string): Promise<any[]> {
+        // We pass empty userId because sessionId is unique across all users in MongoDB/Firestore
+        const history = await this.memory.getConversationHistory('', sessionId, systemToken);
+        return history.map(m => ({
+            role: m.role === 'system' ? 'assistant' : m.role,
+            content: m.content,
+            timestamp: m.timestamp
+        }));
+    }
+
+    async deleteConversation(sessionId: string, systemToken?: string): Promise<void> {
+        await this.memory.deleteConversation(sessionId, systemToken);
     }
 
     /**
@@ -443,11 +497,16 @@ export class LangChainAgent implements IAgent {
      */
     private parseSuggestions(text: string): { cleanResponse: string, suggestions: string[] } {
         const suggestionRegex = /\[SUGGESTIONS:\s*([\s\S]*?)\]/i;
-        const match = text.match(suggestionRegex);
+        const toolsRegex = /<YAI2_?TOOLS>[\s\S]*?<\/YAI2_?TOOLS>/ig;
+
+        // Strip tools immediately
+        let cleanText = text.replace(toolsRegex, '').trim();
+
+        const match = cleanText.match(suggestionRegex);
 
         if (match) {
             try {
-                const cleanResponse = text.replace(suggestionRegex, '').trim();
+                const cleanResponse = cleanText.replace(suggestionRegex, '').trim();
                 const suggestionsContent = match[1];
                 let suggestions: string[] = [];
 
@@ -462,11 +521,11 @@ export class LangChainAgent implements IAgent {
 
                 return { cleanResponse, suggestions };
             } catch (e) {
-                return { cleanResponse: text.replace(suggestionRegex, '').trim(), suggestions: [] };
+                return { cleanResponse: cleanText.replace(suggestionRegex, '').trim(), suggestions: [] };
             }
         }
 
-        return { cleanResponse: text, suggestions: [] };
+        return { cleanResponse: cleanText, suggestions: [] };
     }
 
     /**
@@ -566,5 +625,28 @@ export class LangChainAgent implements IAgent {
         }
 
         return current;
+    }
+
+    /**
+     * Asynchronously generates a very short title for a new conversation based on the first message
+     */
+    private async generateConversationTitle(message: string, sessionId: string): Promise<void> {
+        try {
+            if (!this.llm) await this.initialize();
+            if (!this.memory.updateConversationTitle) return; // Not supported by the store
+
+            const prompt = `Generate a very brief, concise title (maximum 4-5 words) for a chat that starts with this user message. Do not use quotes, punctuation, or boilerplate text in the title:\n\nUser: ${message}`;
+            
+            const response = await this.llm!.invoke([{ role: 'user', content: prompt }]);
+            let title = String(response.content).trim().replace(/^["']|["']$/g, '');
+            
+            if (!title) {
+                title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
+            }
+
+            await this.memory.updateConversationTitle(sessionId, title);
+        } catch (error: any) {
+            console.warn('[LangChainAgent] Failed to generate conversation title:', error.message);
+        }
     }
 }

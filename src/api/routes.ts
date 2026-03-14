@@ -4,6 +4,7 @@ import { getFirestoreDb } from '../infrastructure/database/FirestoreClient.js';
 import multer from 'multer';
 import { NotebookService } from '../skills/notebook/NotebookService.js';
 import { ChatManagerEngine } from '../manager/ChatManagerEngine.js';
+import axios from 'axios';
 
 // Use memory storage for ephemeral processing before pushing to GCP Bucket
 const upload = multer({
@@ -45,11 +46,15 @@ export function createRoutes(agent: IAgent): Router {
      */
     router.post('/api/ai-agent', async (req: Request, res: Response) => {
         try {
-            const { user_id, message, stream } = req.body;
-            const userId = user_id;
+            console.log('📥 req.body:', JSON.stringify(req.body));
+            const { user_id, userId: altUserId, message, stream, conversationId } = req.body;
+            const userId = user_id || altUserId;
             const userToken = req.headers.authorization;
-            if (!message || !userId) {
-                return res.status(400).json({ error: 'Both "message" and "userId" are required' });
+            if (!message) {
+                return res.status(400).json({ error: 'Field "message" is required in request body' });
+            }
+            if (!userId) {
+                return res.status(400).json({ error: 'Field "userId" or "user_id" is required in request body' });
             }
 
             // --- STREAMING MODE ---
@@ -67,10 +72,14 @@ export function createRoutes(agent: IAgent): Router {
 
                 const result = await agent.stream(userId, orchestratorParams, (chunk) => {
                     res.write(chunk);
-                });
+                }, conversationId);
 
                 if (result.suggestions && result.suggestions.length > 0) {
                     res.write(`\n[SUGGESTIONS: ${JSON.stringify(result.suggestions)}]`);
+                }
+
+                if (result.conversationId) {
+                    res.write(`\n[CONVERSATION_ID: ${result.conversationId}]`);
                 }
 
                 if (result.usage) {
@@ -90,7 +99,7 @@ export function createRoutes(agent: IAgent): Router {
                 orchestratorParams.__systemToken = userToken;
             }
 
-            const result = await agent.process(userId, orchestratorParams);
+            const result = await agent.process(userId, orchestratorParams, conversationId);
 
             return res.json({
                 response: result.response,
@@ -99,7 +108,8 @@ export function createRoutes(agent: IAgent): Router {
                 usedTools: result.usedTools,
                 usage: result.usage,
                 suggestions: result.suggestions,
-                chartData: result.chartData
+                chartData: result.chartData,
+                conversationId: result.conversationId || conversationId || `${userId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
             });
 
         } catch (err: any) {
@@ -141,6 +151,81 @@ export function createRoutes(agent: IAgent): Router {
         } catch (err: any) {
             console.error('❌ Clear history error:', err);
             return res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * Clear conversation history (Proxy to Agent 2)
+     */
+    router.delete('/api/agent/conversations', async (req: Request, res: Response) => {
+        try {
+            const userId = req.query.userId as string;
+            const userToken = req.headers.authorization;
+
+            if (!userId) {
+                return res.status(400).json({ success: false, error: 'userId is required' });
+            }
+
+            // Delete from whichever memory provider is active
+            await agent.clearHistory(userId, userToken);
+
+            return res.json({
+                success: true,
+                message: 'All conversation history cleared successfully'
+            });
+
+        } catch (err: any) {
+            console.error('❌ Clear history error:', err);
+            return res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * Delete a specific conversation (Proxy to Agent 2)
+     */
+    router.delete('/api/agent/conversations/:id', async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const userToken = req.headers.authorization;
+            await agent.deleteConversation(id, userToken);
+            return res.json({ success: true, message: 'Conversation deleted' });
+        } catch (error: any) {
+            console.error('❌ Proxy Delete conversation error:', error.message);
+            return res.status(500).json({ success: false, message: 'Failed to delete conversation' });
+        }
+    });
+
+    /**
+     * Get user's conversation list (Proxy to Agent 2)
+     */
+    router.get('/api/agent/conversations', async (req: Request, res: Response) => {
+        try {
+            const userId = req.query.userId as string;
+            if (!userId) return res.status(400).json({ success: false, error: 'userId query parameter required' });
+            const userToken = req.headers.authorization;
+
+            const conversations = await agent.getConversations(userId, userToken);
+            return res.json({ success: true, conversations });
+        } catch (error: any) {
+            console.error('❌ Proxy Fetch conversations error:', error.message);
+            return res.json({ success: true, conversations: [] });
+        }
+    });
+
+    /**
+     * Get messages for a specific conversation session (Proxy to Agent 2)
+     */
+    router.get('/api/agent/history/:sessionId', async (req: Request, res: Response) => {
+        try {
+            const { sessionId } = req.params;
+            const userToken = req.headers.authorization;
+            console.log(`[Routes] Fetching history for session: ${sessionId}`);
+            const messages = await agent.getHistory(sessionId, userToken);
+            console.log(`[Routes] Found ${messages.length} messages for session: ${sessionId}`);
+            return res.json({ success: true, messages });
+        } catch (error: any) {
+            console.error('❌ Fetch history error:', error.message);
+            return res.json({ success: true, messages: [] });
         }
     });
 

@@ -11,18 +11,18 @@ export class FirestoreMemoryStore implements IMemoryStore {
      * Get or create a 24-hour rolling session ID for the user to keep chats grouped 
      * cleanly per day instead of one infinite list forever.
      */
-    private getSessionId(userId: string): string {
+    public generateSessionId(userId: string): string {
         const date = new Date().toISOString().split('T')[0]; // "2026-03-11"
         return `${userId}_${date}`;
     }
 
-    async saveMessage(userId: string, role: 'user' | 'assistant' | 'system', content: string): Promise<void> {
+    async saveMessage(userId: string, role: 'user' | 'assistant' | 'system', content: string, sessionId?: string, systemToken?: string): Promise<void> {
         if (!userId || !content) return;
         
         try {
             console.log(`[FirestoreMemoryStore] Saving message for ${userId}...`);
-            const sessionId = this.getSessionId(userId);
-            const docRef = this.db.collection(this.collectionName).doc(sessionId);
+            const activeSessionId = sessionId || this.generateSessionId(userId);
+            const docRef = this.db.collection(this.collectionName).doc(activeSessionId);
 
             const msg = {
                 role,
@@ -32,7 +32,9 @@ export class FirestoreMemoryStore implements IMemoryStore {
 
             await docRef.set({
                 userId,
+                updatedAt: FieldValue.serverTimestamp(),
                 lastUpdated: FieldValue.serverTimestamp(),
+                isActive: true
             }, { merge: true });
 
             await docRef.update({
@@ -51,9 +53,18 @@ export class FirestoreMemoryStore implements IMemoryStore {
         }
     }
 
-    async getConversationHistory(userId: string): Promise<ConversationMessage[]> {
-        const sessionId = this.getSessionId(userId);
-        const doc = await this.db.collection(this.collectionName).doc(sessionId).get();
+    async updateConversationTitle(sessionId: string, title: string): Promise<void> {
+        try {
+            const docRef = this.db.collection(this.collectionName).doc(sessionId);
+            await docRef.set({ title }, { merge: true });
+        } catch (error) {
+            console.error(`[FirestoreMemoryStore] FAILED to update title!`, error);
+        }
+    }
+
+    async getConversationHistory(userId: string, sessionId?: string, systemToken?: string): Promise<ConversationMessage[]> {
+        const activeSessionId = sessionId || this.generateSessionId(userId);
+        const doc = await this.db.collection(this.collectionName).doc(activeSessionId).get();
 
         if (!doc.exists) {
             return [];
@@ -72,8 +83,26 @@ export class FirestoreMemoryStore implements IMemoryStore {
         return [];
     }
 
-    async clearConversationHistory(userId: string): Promise<void> {
-        const sessionId = this.getSessionId(userId);
+    async clearConversationHistory(userId: string, sessionId?: string, systemToken?: string): Promise<void> {
+        const activeSessionId = sessionId || this.generateSessionId(userId);
+        await this.db.collection(this.collectionName).doc(activeSessionId).delete();
+    }
+
+    async getConversations(userId: string, systemToken?: string): Promise<any[]> {
+        const snapshot = await this.db.collection(this.collectionName)
+            .where('userId', '==', userId)
+            .orderBy('updatedAt', 'desc')
+            .get();
+
+        if (snapshot.empty) return [];
+
+        return snapshot.docs.map(doc => ({
+            _id: doc.id,
+            ...doc.data()
+        }));
+    }
+
+    async deleteConversation(sessionId: string, systemToken?: string): Promise<void> {
         await this.db.collection(this.collectionName).doc(sessionId).delete();
     }
 

@@ -2,20 +2,28 @@
  * Memory store interface for conversation and user data persistence
  */
 export interface IMemoryStore {
-    /**
-     * Save a message to conversation history
-     */
-    saveMessage(userId: string, role: 'user' | 'assistant' | 'system', content: string): Promise<void>;
+    generateSessionId(userId: string): string;
+    saveMessage(userId: string, role: 'user' | 'assistant' | 'system', content: string, sessionId?: string, systemToken?: string): Promise<void>;
 
     /**
      * Retrieve conversation history for a user
      */
-    getConversationHistory(userId: string): Promise<ConversationMessage[]>;
+    getConversationHistory(userId: string, sessionId?: string, systemToken?: string): Promise<ConversationMessage[]>;
 
     /**
      * Clear conversation history for a user
      */
-    clearConversationHistory(userId: string): Promise<void>;
+    clearConversationHistory(userId: string, sessionId?: string, systemToken?: string): Promise<void>;
+
+    /**
+     * Get list of conversations for a user
+     */
+    getConversations(userId: string, systemToken?: string): Promise<any[]>;
+
+    /**
+     * Delete a specific conversation by ID
+     */
+    deleteConversation(sessionId: string, systemToken?: string): Promise<void>;
 
     /**
      * Get user profile data
@@ -26,6 +34,11 @@ export interface IMemoryStore {
      * Update user profile data
      */
     updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<void>;
+
+    /**
+     * Update conversation title
+     */
+    updateConversationTitle?(sessionId: string, title: string): Promise<void>;
 }
 
 export interface ConversationMessage {

@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { LangChainAgent } from './core/LangChainAgent.js';
 import { FirestoreMemoryStore } from './core/FirestoreMemoryStore.js';
 import { InMemoryStore } from './core/InMemoryStore.js';
+import { AgentTwoMemoryStore } from './core/AgentTwoMemoryStore.js';
+import { MongoMemoryStore } from './core/MongoMemoryStore.js';
 import { ToolRegistry } from './core/ToolRegistry.js';
 import { createServer } from './api/server.js';
 import { getDynamicSystemPrompt } from './config/prompts.js';
@@ -22,6 +24,7 @@ import { GOOGLE_DRIVE_TOOLS } from './skills/data/GoogleDriveTools.js';
 import { DYNAMIC_MONGO_TOOLS } from './skills/data/DynamicMongoTools.js';
 import { VERTEX_AI_TOOLS } from './skills/report/VertexAITools.js';
 import { AGENT_TWO_TOOLS } from './skills/agent/AgentTwoTool.js';
+import { AnalyzeUserHistoryTool } from './skills/profile/AnalyzeUserHistoryTool.js';
 
 /**
  * Bootstrap and start the AI Agent application
@@ -52,11 +55,17 @@ async function bootstrap() {
 
     // Initialize infrastructure
     console.log('⚙️ Initializing infrastructure...');
-    const MEMORY_PROVIDER = (process.env.MEMORY_PROVIDER || 'memory') as 'firestore' | 'memory';
-    let memory: FirestoreMemoryStore | InMemoryStore;
-    if (MEMORY_PROVIDER === 'firestore') {
+    const MEMORY_PROVIDER = (process.env.MEMORY_PROVIDER || 'memory') as 'firestore' | 'memory' | 'agent2' | 'mongodb';
+    let memory: any;
+    if (MEMORY_PROVIDER === 'mongodb') {
+        memory = new MongoMemoryStore();
+        console.log(`   ✓ Memory: MongoDB Direct (shared with Agent 2)`);
+    } else if (MEMORY_PROVIDER === 'agent2') {
+        memory = new AgentTwoMemoryStore();
+        console.log(`   ✓ Memory: Agent 2 Remote Memory Service (stateless)`);
+    } else if (MEMORY_PROVIDER === 'firestore') {
         memory = new FirestoreMemoryStore();
-        console.log(`   ✓ Memory: Google Cloud Firestore (projectId: ai-agent-489507)`);
+        console.log(`   ✓ Memory: Google Cloud Firestore`);
     } else {
         memory = new InMemoryStore(MAX_HISTORY);
         console.log(`   ✓ Memory: In-Memory (local dev mode — data resets on restart)`);
@@ -96,10 +105,12 @@ async function bootstrap() {
         toolRegistry.register(tool, 'gatepass');
     });
 
-    // Register Car Booking tools
+    // Register Car Booking tools (Handled by Agent 2 Delegation now)
+    /*
     CAR_BOOKING_MONGO_TOOLS.forEach(tool => {
         toolRegistry.register(tool, 'car_booking');
     });
+    */
 
     // Register Web Search tools
     WEB_SEARCH_TOOLS.forEach(tool => {
@@ -135,6 +146,9 @@ async function bootstrap() {
     AGENT_TWO_TOOLS.forEach(tool => {
         toolRegistry.register(tool, 'general');
     });
+
+    // Register User History tools
+    toolRegistry.register(new AnalyzeUserHistoryTool(), 'profile');
 
     console.log(`   ✓ Registered ${toolRegistry.getAllTools().length} tools`);
 
