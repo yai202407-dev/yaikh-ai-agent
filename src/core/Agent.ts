@@ -22,7 +22,7 @@ export class Agent implements IAgent {
     /**
      * Process user message
      */
-    async process(userId: string, message: string): Promise<AgentResponse> {
+    async process(userId: string, message: string, conversationId?: string): Promise<AgentResponse> {
         console.log(`\n📨 [Agent] Processing message from user ${userId}`);
 
         const totalUsage: TokenUsage = {
@@ -242,16 +242,33 @@ export class Agent implements IAgent {
     /**
      * Clear conversation history
      */
-    async stream(userId: string, message: string, onChunk: (chunk: string) => void): Promise<AgentResponse> {
+    async stream(userId: string, message: string, onChunk: (chunk: string) => void, conversationId?: string): Promise<AgentResponse> {
         onChunk("Streaming not completely implemented yet...");
-        return this.process(userId, message);
+        return this.process(userId, message, conversationId);
     }
 
     /**
      * Clear conversation history
      */
-    async clearHistory(userId: string): Promise<void> {
-        await this.memory.clearConversationHistory(userId);
+    async clearHistory(userId: string, systemToken?: string): Promise<void> {
+        await this.memory.clearConversationHistory(userId, undefined, systemToken);
         console.log(`🗑️ [Agent] Cleared conversation history for user ${userId}`);
+    }
+
+    async getConversations(userId: string, systemToken?: string): Promise<any[]> {
+        return await this.memory.getConversations(userId, systemToken);
+    }
+
+    async getHistory(sessionId: string, systemToken?: string): Promise<any[]> {
+        const history = await this.memory.getConversationHistory('', sessionId, systemToken);
+        return history.map(m => ({
+            role: m.role === 'system' ? 'assistant' : m.role,
+            content: m.content,
+            timestamp: m.timestamp
+        }));
+    }
+
+    async deleteConversation(sessionId: string, systemToken?: string): Promise<void> {
+        await this.memory.deleteConversation(sessionId, systemToken);
     }
 }

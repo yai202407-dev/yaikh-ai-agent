@@ -13,8 +13,13 @@ export class InMemoryStore implements IMemoryStore {
         this.maxHistoryLength = maxHistoryLength;
     }
 
-    async saveMessage(userId: string, role: 'user' | 'assistant' | 'system', content: string): Promise<void> {
-        const history = this.conversations.get(userId) || [];
+    generateSessionId(userId: string): string {
+        return `mem_${userId}_${Date.now()}`;
+    }
+
+    async saveMessage(userId: string, role: 'user' | 'assistant' | 'system', content: string, sessionId?: string, systemToken?: string): Promise<void> {
+        const key = sessionId || userId;
+        const history = this.conversations.get(key) || [];
 
         history.push({
             role,
@@ -24,15 +29,25 @@ export class InMemoryStore implements IMemoryStore {
 
         // Keep only the last N messages
         const trimmedHistory = history.slice(-this.maxHistoryLength);
-        this.conversations.set(userId, trimmedHistory);
+        this.conversations.set(key, trimmedHistory);
     }
 
-    async getConversationHistory(userId: string): Promise<ConversationMessage[]> {
-        return this.conversations.get(userId) || [];
+    async getConversationHistory(userId: string, sessionId?: string, systemToken?: string): Promise<ConversationMessage[]> {
+        const key = sessionId || userId;
+        return this.conversations.get(key) || [];
     }
 
-    async clearConversationHistory(userId: string): Promise<void> {
-        this.conversations.delete(userId);
+    async clearConversationHistory(userId: string, sessionId?: string, systemToken?: string): Promise<void> {
+        const key = sessionId || userId;
+        this.conversations.delete(key);
+    }
+
+    async getConversations(userId: string, systemToken?: string): Promise<any[]> {
+        return []; // In-memory doesn't keep track of session metadata easily, return empty for mock
+    }
+
+    async deleteConversation(sessionId: string, systemToken?: string): Promise<void> {
+        this.conversations.delete(sessionId);
     }
 
     async getUserProfile(userId: string): Promise<UserProfile> {

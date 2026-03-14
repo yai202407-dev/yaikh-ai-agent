@@ -1,0 +1,4 @@
+﻿src/core/Agent.ts(12,14): error TS2420: Class 'Agent' incorrectly implements interface 'IAgent'.
+  Type 'Agent' is missing the following properties from type 'IAgent': getConversations, getHistory, deleteConversation
+src/infrastructure/memory/InMemoryStore.ts(7,14): error TS2420: Class 'InMemoryStore' incorrectly implements interface 'IMemoryStore'.
+  Type 'InMemoryStore' is missing the following properties from type 'IMemoryStore': generateSessionId, getConversations, deleteConversation
