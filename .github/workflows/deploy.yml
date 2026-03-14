@@ -81,6 +81,7 @@ jobs:
             MODULE_SCOPE=AI_ADMIN\,AI_PRODUCTION\,AI_HR\,AI_QMS
             LANGCHAIN_PROJECT=Yorkmars Agent
             REPORT_BASE_URL=https://yaikh-ai-agent-dtbkajcrna-as.a.run.app
+            AGENT_TWO_ENDPOINT=https://yai-agent2.yaikh.com
           secrets: |
             GEMINI_API_KEY=yaikh-gemini-api-key:latest
             LANGCHAIN_API_KEY=yaikh-langsmith-key:latest
