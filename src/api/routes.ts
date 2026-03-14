@@ -397,15 +397,45 @@ export function createRoutes(agent: IAgent): Router {
 
     /**
      * POST /api/manager/analyze-topics
-     * Triggers the Chat Manager AI to scan DM messages and surface trending topics.
+     * Triggers topic trend analysis via Chat Manager AI.
+     * 
+     * Accepts two auth modes:
+     *  1. Cloud Scheduler: x-cron-secret header == CRON_SECRET env var
+     *  2. Manual "Scan Now" from UI: x-scan-key header == SCAN_KEY env var (or fallback open in dev)
      */
-    router.post('/api/manager/analyze-topics', async (_req: Request, res: Response) => {
+    router.post('/api/manager/analyze-topics', async (req: Request, res: Response) => {
+        const cronSecret = process.env.CRON_SECRET || '';
+        const scanKey = process.env.SCAN_KEY || '';
+        const incomingCron = req.headers['x-cron-secret'] as string || '';
+        const incomingKey = req.headers['x-scan-key'] as string || '';
+
+        // Allow if: correct cron secret, correct scan key, or dev mode (no secrets configured)
+        const isScheduler = cronSecret && incomingCron === cronSecret;
+        const isManualUI = scanKey && incomingKey === scanKey;
+        const isDev = !cronSecret && !scanKey;
+
+        if (!isScheduler && !isManualUI && !isDev) {
+            console.warn('⚠️ [Scheduler] Unauthorized analyze-topics attempt');
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+
         try {
+            console.log(`🕐 [Scheduler] analyze-topics triggered by ${isScheduler ? 'Cloud Scheduler' : isManualUI ? 'Manual UI' : 'Dev mode'}`);
             const topics = await chatManagerEngine.analyzeTopicTrends();
+
+            // Record last scan timestamp in Firestore
+            const db = getFirestoreDb();
+            await db.collection('system_meta').doc('topic_scan').set({
+                lastScanAt: new Date(),
+                lastTopicCount: topics.length,
+                triggeredBy: isScheduler ? 'scheduler' : 'manual',
+            }, { merge: true });
+
             return res.json({
                 success: true,
-                message: `Analysis complete. Found ${topics.length} trending topic(s).`,
-                topics,
+                message: `Scan complete. Found ${topics.length} trending topic(s).`,
+                topicCount: topics.length,
+                scannedAt: new Date().toISOString(),
             });
         } catch (error: any) {
             console.error('❌ Topic analysis error:', error);
@@ -415,7 +445,7 @@ export function createRoutes(agent: IAgent): Router {
 
     /**
      * GET /api/manager/topics
-     * Returns current active (and recently resolved) trending topics from Firestore.
+     * Returns current active + recently resolved trending topics from Firestore.
      */
     router.get('/api/manager/topics', async (_req: Request, res: Response) => {
         try {
@@ -424,7 +454,6 @@ export function createRoutes(agent: IAgent): Router {
                 .orderBy('heatScore', 'desc')
                 .limit(20)
                 .get();
-
             const topics = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             return res.json({ success: true, topics });
         } catch (error: any) {
@@ -434,18 +463,47 @@ export function createRoutes(agent: IAgent): Router {
     });
 
     /**
+     * GET /api/manager/topics/stats
+     * Returns metadata: last scan time, counts by status.
+     * Used by the Channels board header to show "Last scanned X min ago".
+     */
+    router.get('/api/manager/topics/stats', async (_req: Request, res: Response) => {
+        try {
+            const db = getFirestoreDb();
+
+            const [metaDoc, activeSnap, resolvedSnap] = await Promise.all([
+                db.collection('system_meta').doc('topic_scan').get(),
+                db.collection('trending_topics').where('status', '!=', 'resolved').count().get(),
+                db.collection('trending_topics').where('status', '==', 'resolved').count().get(),
+            ]);
+
+            const meta = metaDoc.exists ? metaDoc.data() : null;
+
+            return res.json({
+                success: true,
+                lastScanAt: meta?.lastScanAt?.toDate()?.toISOString() || null,
+                lastTopicCount: meta?.lastTopicCount || 0,
+                triggeredBy: meta?.triggeredBy || null,
+                activeCounts: activeSnap.data().count,
+                resolvedCounts: resolvedSnap.data().count,
+            });
+        } catch (error: any) {
+            console.error('❌ topics/stats error:', error);
+            return res.status(500).json({ success: false, error: 'Failed to fetch stats' });
+        }
+    });
+
+    /**
      * POST /api/manager/topics/:id/respond
-     * Allows management to post an official response, resolving the topic.
+     * Management posts an official response, resolves the topic.
      */
     router.post('/api/manager/topics/:id/respond', async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const { response, respondedBy } = req.body;
-
             if (!response || !respondedBy) {
                 return res.status(400).json({ success: false, error: 'response and respondedBy are required' });
             }
-
             await chatManagerEngine.postOfficialResponse(id, response, respondedBy);
             return res.json({ success: true, message: 'Official response posted. Topic marked resolved.' });
         } catch (error: any) {
