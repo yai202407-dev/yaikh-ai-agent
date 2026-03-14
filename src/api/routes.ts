@@ -312,5 +312,87 @@ export function createRoutes(agent: IAgent): Router {
         }
     });
 
+
+    /**
+     * GET /api/users — list all users from MongoDB (for ComDeck identity + future auth)
+     */
+    router.get('/api/users', async (req: Request, res: Response) => {
+        try {
+            const { department, limit = '200' } = req.query as any;
+            const { getMongoClient } = await import('../infrastructure/database/MongoDBClient.js');
+            const client = getMongoClient();
+            await client.connect();
+            const db = client.getDb();
+
+            const query: any = { is_active: { $ne: false } };
+            if (department) {
+                query.department = { $regex: department, $options: 'i' };
+            }
+
+            const users = await db.collection('users')
+                .find(query)
+                .project({
+                    _id: 1,
+                    name: 1,
+                    employee_id: 1,
+                    department: 1,
+                    position: 1,
+                    email: 1,
+                    avatar: 1,
+                })
+                .limit(parseInt(limit) > 500 ? 500 : parseInt(limit))
+                .sort({ department: 1, name: 1 })
+                .toArray();
+
+            return res.json({
+                success: true,
+                count: users.length,
+                users: users.map(u => ({
+                    id: u._id.toString(),
+                    name: u.name || u.employee_id || 'Unknown',
+                    department: u.department || 'General',
+                    position: u.position || '',
+                    email: u.email || '',
+                    avatar: u.avatar || null,
+                }))
+            });
+        } catch (error: any) {
+            console.error('❌ GET /api/users error:', error);
+            return res.status(500).json({ success: false, error: 'Failed to fetch users', details: error.message });
+        }
+    });
+
+    /**
+     * GET /api/users/:id — get a single user by MongoDB ID
+     */
+    router.get('/api/users/:id', async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { getMongoClient } = await import('../infrastructure/database/MongoDBClient.js');
+            const client = getMongoClient();
+            await client.connect();
+            const user = await client.getUserById(id);
+
+            if (!user) {
+                return res.status(404).json({ success: false, error: 'User not found' });
+            }
+
+            return res.json({
+                success: true,
+                user: {
+                    id: user._id.toString(),
+                    name: user.name || user.employee_id || 'Unknown',
+                    department: user.department || 'General',
+                    position: user.position || '',
+                    email: user.email || '',
+                    avatar: user.avatar || null,
+                }
+            });
+        } catch (error: any) {
+            console.error('❌ GET /api/users/:id error:', error);
+            return res.status(500).json({ success: false, error: 'Failed to fetch user' });
+        }
+    });
+
     return router;
 }

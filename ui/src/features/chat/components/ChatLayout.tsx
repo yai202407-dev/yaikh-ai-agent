@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChatLogFeedModal } from './ChatLogFeedModal';
 import { NotebookSidebar } from './NotebookSidebar';
 import { ComDeck } from './ComDeck';
@@ -12,6 +12,7 @@ interface ChatLayoutProps {
     activeDeckTools?: string[];
     onOpenDm?: (recipient: DmUser) => void;
     currentUser?: DmUser;
+    onOpenIdentitySelector?: () => void;
 }
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({
@@ -22,42 +23,16 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
     activeDeckTools,
     onOpenDm,
     currentUser,
+    onOpenIdentitySelector,
 }) => {
 
-    const [userName, setUserName] = useState('Yai Data');
+    // Use the currentUser prop for display name — falls back to 'Yai Data'
+    const displayName = currentUser?.name || 'Yai Data';
+    const displayInitials = displayName.split(' ').map((n: string) => n[0]).join('').substring(0, 3).toUpperCase();
+
     const [showChatFeed, setShowChatFeed] = useState(false);
     const [showNotebook, setShowNotebook] = useState(false);
     const [showComDeck, setShowComDeck] = useState(false);
-
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                // Fetching user info assuming cookie/token might be handling auth implicitly.
-                const token = localStorage.getItem('auth_token') || 'YOUR_PROVIDED_TOKEN_HERE';
-                const response = await fetch('https://ym.yaikh.com/api/v1/user', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    // Handle common JSON response patterns
-                    if (data && data.name) {
-                        setUserName(data.name);
-                    } else if (data && data.data && data.data.name) {
-                        setUserName(data.data.name);
-                    } else if (data && data.user && data.user.name) {
-                        setUserName(data.user.name);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch user info:", error);
-            }
-        };
-        fetchUser();
-    }, []);
-
-
 
     return (
         <div className="flex h-screen w-full bg-[#010409] text-white relative font-sans min-w-[320px]">
@@ -102,10 +77,20 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                             Back
                         </button>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-[#FF6B2C] to-[#E84E0F] flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(255,107,44,0.3)] border border-[#FF8A5B]/20 pointer-events-none shrink-0">
-                                <span className="text-[13px] tracking-tight">{userName.substring(0, 3)}</span>
-                            </div>
-                            <span className="font-bold text-[15px] tracking-wide text-white/90">{userName}</span>
+                            <button
+                                onClick={onOpenIdentitySelector}
+                                className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-[#FF6B2C] to-[#E84E0F] flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(255,107,44,0.3)] border border-[#FF8A5B]/20 shrink-0 hover:shadow-[0_0_28px_rgba(255,107,44,0.5)] transition-all"
+                                title="Change identity"
+                            >
+                                <span className="text-[13px] tracking-tight">{displayInitials}</span>
+                            </button>
+                            <button
+                                onClick={onOpenIdentitySelector}
+                                className="font-bold text-[15px] tracking-wide text-white/90 hover:text-[#FF6B2C] transition-colors"
+                                title="Change identity"
+                            >
+                                {displayName}
+                            </button>
                             
                             <button
                                 onClick={() => setShowComDeck(!showComDeck)}

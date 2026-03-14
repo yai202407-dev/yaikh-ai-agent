@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChat } from '../features/chat/hooks/useChat';
 import { ChatLayout } from '../features/chat/components/ChatLayout';
 import { MessageList } from '../features/chat/components/MessageList';
@@ -6,38 +6,38 @@ import { ChatInput } from '../features/chat/components/ChatInput';
 import { AgentSettingsModal } from '../features/agent-config/components/AgentSettingsModal';
 import { useAgentConfig } from '../features/agent-config/hooks/useAgentConfig';
 import { DmChatView } from '../features/chat/components/DmChatView';
+import { IdentitySelector, loadStoredIdentity } from '../features/chat/components/IdentitySelector';
 import type { DmUser } from '../features/chat/hooks/useDmChat';
-
-// ── Current user identity (guest until real auth is wired) ──────────────────
-// We derive a stable guest ID from the browser. Phase 2 will replace this
-// with the real MongoDB user session.
-const getGuestUser = (): DmUser => {
-    let guestId = localStorage.getItem('yai_guest_id');
-    if (!guestId) {
-        guestId = `guest_${Math.random().toString(36).substring(2, 10)}`;
-        localStorage.setItem('yai_guest_id', guestId);
-    }
-    return {
-        id: guestId,
-        name: localStorage.getItem('yai_guest_name') || 'Yai Data',
-        department: 'General',
-    };
-};
 
 export const ChatPage: React.FC = () => {
     const { messages, isLoading, sendMessage, activeDeckTools } = useChat();
     const { config, availableModels, updateConfig } = useAgentConfig();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // ── DM State ────────────────────────────────────────────────────────────
-    const [dmRecipient, setDmRecipient] = useState<DmUser | null>(null);
-    const currentUser = getGuestUser();
+    // ── Real user identity (Phase 2) ────────────────────────────────────────
+    const [currentUser, setCurrentUser] = useState<DmUser | null>(() => loadStoredIdentity());
+    const [showIdentitySelector, setShowIdentitySelector] = useState<boolean>(() => !loadStoredIdentity());
 
+    // ── DM State ─────────────────────────────────────────────────────────────
+    const [dmRecipient, setDmRecipient] = useState<DmUser | null>(null);
     const handleOpenDm = (recipient: DmUser) => setDmRecipient(recipient);
     const handleCloseDm = () => setDmRecipient(null);
 
+    // If for some reason identity is cleared, re-prompt
+    useEffect(() => {
+        if (!currentUser) setShowIdentitySelector(true);
+    }, [currentUser]);
+
     return (
         <>
+            {/* Identity selector — appears on first visit or when user clicks their name */}
+            <IdentitySelector
+                isOpen={showIdentitySelector}
+                onClose={() => { if (currentUser) setShowIdentitySelector(false); }}
+                onSelect={(user) => { setCurrentUser(user); setShowIdentitySelector(false); }}
+                currentUser={currentUser}
+            />
+
             <ChatLayout
                 headerContent={
                     <div className="fixed left-1/2 -translate-x-1/2 top-10 flex flex-col items-center pointer-events-none z-50">
@@ -49,7 +49,6 @@ export const ChatPage: React.FC = () => {
                     </div>
                 }
                 inputContent={
-                    // Hide AI input when in DM mode — DmChatView has its own input
                     dmRecipient ? null : (
                         <ChatInput
                             onSendMessage={async (msg) => { await sendMessage(msg); }}
@@ -63,10 +62,10 @@ export const ChatPage: React.FC = () => {
                 }}
                 activeDeckTools={activeDeckTools}
                 onOpenDm={handleOpenDm}
-                currentUser={currentUser}
+                currentUser={currentUser || { id: 'guest', name: 'Guest', department: 'General' }}
+                onOpenIdentitySelector={() => setShowIdentitySelector(true)}
             >
-                {/* Switch center content: AI chat ↔ 1-on-1 DM */}
-                {dmRecipient ? (
+                {dmRecipient && currentUser ? (
                     <DmChatView
                         currentUser={currentUser}
                         recipient={dmRecipient}
