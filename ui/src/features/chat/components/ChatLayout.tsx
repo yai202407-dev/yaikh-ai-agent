@@ -55,7 +55,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
 
 
     return (
-        <div className="flex h-screen w-full bg-[#010409] text-white relative overflow-hidden font-sans">
+        <div className="flex h-screen w-full bg-[#010409] text-white relative font-sans min-w-[320px]">
             {/* Deep space background layers */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[10%] left-[15%] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[120px]" />
@@ -73,10 +73,10 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                 <div className="absolute top-[75%] left-[70%] w-[2px] h-[2px] bg-white/40 rounded-full" />
             </div>
 
-            <main className="flex-1 flex flex-col z-10 relative max-w-[1400px] mx-auto w-full">
-                <header className="pt-8 pb-4 px-10 flex items-start justify-between relative">
+            <main className="flex-1 flex flex-col z-10 relative w-full min-w-0 overflow-hidden">
+                <header className="pt-4 pb-3 px-4 md:pt-8 md:pb-4 md:px-10 flex items-start justify-between relative flex-wrap gap-2">
                     {/* Left Header Controls */}
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-3 md:gap-6">
                         <button
                             onClick={() => {
                                 // If embedded in iframe, try to navigate parent Document
@@ -96,11 +96,11 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
                             Back
                         </button>
-                        <div className="flex items-center gap-3">
-                            <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-[#FF6B2C] to-[#E84E0F] flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(255,107,44,0.3)] border border-[#FF8A5B]/20 pointer-events-none">
-                                <span className="text-[15px] tracking-tight">{userName.substring(0, 3)}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-[#FF6B2C] to-[#E84E0F] flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(255,107,44,0.3)] border border-[#FF8A5B]/20 pointer-events-none shrink-0">
+                                <span className="text-[13px] tracking-tight">{userName.substring(0, 3)}</span>
                             </div>
-                            <span className="font-bold text-[17px] tracking-wide text-white/90 mr-6">{userName}</span>
+                            <span className="font-bold text-[15px] tracking-wide text-white/90">{userName}</span>
                             
                             <button
                                 onClick={() => setShowComDeck(!showComDeck)}
