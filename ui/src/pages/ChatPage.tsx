@@ -6,6 +6,7 @@ import { ChatInput } from '../features/chat/components/ChatInput';
 import { AgentSettingsModal } from '../features/agent-config/components/AgentSettingsModal';
 import { useAgentConfig } from '../features/agent-config/hooks/useAgentConfig';
 import { DmChatView } from '../features/chat/components/DmChatView';
+import { IdentitySelector } from '../features/chat/components/IdentitySelector';
 import type { DmUser } from '../features/chat/hooks/useDmChat';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -50,9 +51,10 @@ export const ChatPage: React.FC = () => {
     const { config, availableModels, updateConfig } = useAgentConfig();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // ── Identity: from Laravel token OR cached localStorage ──────────────────
+    // ── Identity: from Laravel token OR cached localStorage OR manual selector ─
     const [currentUser, setCurrentUser] = useState<DmUser | null>(null);
-    const [authState, setAuthState] = useState<'loading' | 'ready' | 'unauthenticated'>('loading');
+    const [authState, setAuthState] = useState<'loading' | 'ready' | 'selector'>('loading');
+    const [showIdentitySelector, setShowIdentitySelector] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -86,8 +88,10 @@ export const ChatPage: React.FC = () => {
                 return;
             }
 
-            // 3. No auth at all
-            setAuthState('unauthenticated');
+            // 3. No Laravel token + no cached session → show manual selector
+            //    (fallback for testing / pre-Laravel-integration)
+            setAuthState('selector');
+            setShowIdentitySelector(true);
         })();
     }, []);
 
@@ -108,21 +112,21 @@ export const ChatPage: React.FC = () => {
         );
     }
 
-    // ── Unauthenticated screen ───────────────────────────────────────────────
-    if (authState === 'unauthenticated') {
+    // ── Manual identity selector (fallback when no Laravel token) ────────────
+    if (authState === 'selector' && !currentUser) {
         return (
             <div className="flex h-screen w-full bg-[#010409] items-center justify-center">
-                <div className="flex flex-col items-center gap-4 text-center px-8">
-                    <div className="w-14 h-14 rounded-full bg-[#FF6B2C]/10 border border-[#FF6B2C]/20 flex items-center justify-center">
-                        <svg className="w-7 h-7 text-[#FF6B2C]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p className="text-white/60 font-semibold">Session not found</p>
-                        <p className="text-white/25 text-sm mt-1">Please open the chat from the Yaikh company portal.</p>
-                    </div>
-                </div>
+                <IdentitySelector
+                    isOpen={showIdentitySelector}
+                    onClose={() => {}}
+                    onSelect={(user) => {
+                        saveUser(user);
+                        setCurrentUser(user);
+                        setAuthState('ready');
+                        setShowIdentitySelector(false);
+                    }}
+                    currentUser={null}
+                />
             </div>
         );
     }
